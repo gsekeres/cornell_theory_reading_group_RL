@@ -12,13 +12,13 @@ Contributors:
 
 ### Chapter 1
 
-Python code for the Tic-Tac-Toe example, with Julia code replicating and extending those results. Python code from [Shangtong Zhang](https://github.com/ShangtongZhang/reinforcement-learning-an-introduction), Julia code and slides written by [Gabe Sekeres](https://gabesekeres.com/).
+Python code for the Tic-Tac-Toe example, with Julia code replicating and extending those results. Python code from [Shangtong Zhang](https://github.com/ShangtongZhang/reinforcement-learning-an-introduction), Julia code and slides written by [Gabe](https://gabesekeres.com/).
 
 Status: Replication complete, extensions in progress
 
 ### Chapter 2
 
-Python code for the 10-armed bandit example, with Julia code replicating those results. Python code from [Shangtong Zhang](https://github.com/ShangtongZhang/reinforcement-learning-an-introduction), Julia code and slides written by [Gabe Sekeres](https://gabesekeres.com/).
+Python code for the 10-armed bandit example, with Julia code replicating those results. Python code from [Shangtong Zhang](https://github.com/ShangtongZhang/reinforcement-learning-an-introduction), Julia code and slides written by [Gabe](https://gabesekeres.com/).
 
 Status: Not started.
 
