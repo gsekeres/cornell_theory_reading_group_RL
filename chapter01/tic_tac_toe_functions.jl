@@ -365,7 +365,27 @@ function set_symbol!(player::RLPlayer, symbol::Int, type::String; estimations::D
         elseif type == "rlMinimax"
             for hash_val in keys(ALL_STATES)
                 _, _, _, best_score = ALL_STATES[hash_val]
-                player.estimations[hash_val] = best_score
+                if symbol == 1
+                    if best_score == 1.0
+                        player.estimations[hash_val] = 1.0
+                    elseif best_score == -1.0
+                        player.estimations[hash_val] = 0.0
+                    else
+                        player.estimations[hash_val] = 0.5
+                    end
+                elseif symbol == -1
+                    if best_score == 1.0
+                        player.estimations[hash_val] = 0.0
+                    elseif best_score == -1.0
+                        player.estimations[hash_val] = 1.0
+                    else
+                        player.estimations[hash_val] = 0.5
+                    end
+                end
+            end
+        elseif type == "rlRandom"
+            for hash_val in keys(ALL_STATES)
+                player.estimations[hash_val] = rand()
             end
         end
     end
@@ -565,7 +585,7 @@ end
 """
 Make two RLPlayers compete over a number of turns, never exploring.
 """
-function compete(turns::Int, p1_estimations::Dict{Int,Float64}, p2_estimations::Dict{Int,Float64})
+function compete(turns::Int, p1_estimations::Dict{Int,Float64}, p2_estimations::Dict{Int,Float64}; print::Bool=true)
     player1 = RLPlayer(symbol=1, step_size=0.0, epsilon=0.0)
     player1.estimations = p1_estimations
     player2 = RLPlayer(symbol=-1, step_size=0.0, epsilon=0.0)
@@ -582,7 +602,10 @@ function compete(turns::Int, p1_estimations::Dict{Int,Float64}, p2_estimations::
         end
         reset!(judger)
     end
-    println("$turns turns, player 1 win $(round((player1_win / turns)*100, digits=4))%, player 2 win $(round((player2_win / turns)*100, digits=4))%")
+    if print
+        println("$turns turns, player 1 win $(round((player1_win / turns)*100, digits=4))%, player 2 win $(round((player2_win / turns)*100, digits=4))%")
+    end
+    return player1_win, player2_win
 end
 
 """
