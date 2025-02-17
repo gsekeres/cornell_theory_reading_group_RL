@@ -1,0 +1,446 @@
+\documentclass{beamer}
+\usetheme{metropolis} 
+\usepackage{listings}
+\usepackage{xcolor}
+\definecolor{myBlue}{RGB}{0, 0, 180}
+\definecolor{myGreen}{RGB}{34, 139, 34}
+\definecolor{myRed}{RGB}{180, 0, 0}
+\definecolor{myGray}{RGB}{96, 96, 96}
+\lstset{ 
+    language=Python,
+    basicstyle=\ttfamily\tiny,
+    keywordstyle=\color{myBlue},
+    commentstyle=\color{myGreen},
+    stringstyle=\color{myRed},
+    showstringspaces=false,
+    numberstyle=\tiny\color{myGray},
+    stepnumber=1,
+    numbersep=5pt,
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=true,
+    tabsize=4,
+    captionpos=b
+}
+\title{Chapter 1: Tic Tac Toe}
+\date{\today}
+\author{Gabe Sekeres}
+\institute{Cornell University}
+\begin{document}
+
+  \maketitle
+  \section{Baseline Code}
+  \begin{frame}{Languages}
+  	\begin{itemize}[<+->]
+  		\item There are advantages and disadvantages to any coding language
+  		\item Python: extremely well-known, intuitive, better documented than anything else,\footnote{Matters a lot for LLMs!} basically industry standard
+  		\item Julia: none of these things, but extremely fast
+  		\item Zhang code: Python takes $37.33$ seconds, Julia takes $3.29$, and it reduces to $2.53$ without printing
+  		\item I use Julia. (I'll present the Python, it's more readable)
+  	\end{itemize}
+  \end{frame}
+  \begin{frame}{Classes\footnote{(in Julia, \texttt{struct})}}
+    	Classes are the objects of interest in this code. Each class has a number of inherent attributes, and essentially acts as a tuple of those attributes. We have four:
+    	\begin{enumerate}
+    		\item State $= \langle \text{data}, \text{winner}, \text{hash}, \text{end}\rangle$. This is a single board.
+    		\item Player $= \langle \hat{V}(\mathcal{S}),\alpha,\varepsilon,\text{states},\text{greedy},\{X,O\}\rangle$. This contains all the parameters you'd expect, as well as two vectors, states and greedy.
+    		\item Judger $= \langle P_1,P_2,\text{currentPlayer},\text{currentState}\rangle$. This class runs the game. More on it later.
+    		\item HumanPlayer $= \langle \{X,O\},\text{state}\rangle$. This doesn't matter for us, I will be ignoring all of the human parts from here on.
+    	\end{enumerate}
+  \end{frame}
+  \begin{frame}{Class Functions}
+  		Each class has a set of functions inherent to it. They only use that class's elements. In Python, they are defined in the class, in Julia you define them elsewhere. Each class has a constructor function, where you call \textit{e.g.} \texttt{State()} to build a state.
+  		
+  		\textbf{\textit{Remark.}} Best practice is \textcolor{blue}{\href{https://en.wikipedia.org/wiki/Functional_programming}{functional programming}}, for speed, modularity, and readability. The vast majority of what we'll do is defining functions of different types
+  \end{frame}
+    \begin{frame}[fragile]{State Functions - hash(State)}
+ 		\begin{itemize}
+ 			\item Take in a certain state, and assign it a unique number (the hash value)
+ 		\end{itemize}
+ 		\begin{lstlisting}[language=Python]
+def hash(self):
+    if self.hash_val is None:
+        self.hash_val = 0
+        for i in np.nditer(self.data):
+            self.hash_val = self.hash_val * 3 + i + 1
+    return self.hash_val
+\end{lstlisting}
+  \end{frame}
+  \begin{frame}[fragile]{State Functions - is\_end(State) Part 1}
+  \begin{itemize}
+  	\item Take in a board, check if the game is over, if so add the winner and end value to the state, otherwise add false for both.
+  \end{itemize}
+  \begin{lstlisting}[language=Python]
+def is_end(self):
+    if self.end is not None:
+        return self.end
+    results = []
+    # check row
+    for i in range(BOARD_ROWS):
+        results.append(np.sum(self.data[i, :]))
+    # check columns
+    for i in range(BOARD_COLS):
+       results.append(np.sum(self.data[:, i]))
+    # check diagonals
+    trace = 0
+    reverse_trace = 0
+    for i in range(BOARD_ROWS):
+        trace += self.data[i, i]
+        reverse_trace += self.data[i, BOARD_ROWS - 1 - i]
+    results.append(trace)
+    results.append(reverse_trace)
+\end{lstlisting}
+  	  \end{frame}
+  \begin{frame}[fragile]{State Functions - is\_end(State) Part 2}
+  \begin{lstlisting}[language=Python]
+      for result in results:
+          if result == 3:
+              self.winner = 1
+              self.end = True
+              return self.end
+          if result == -3:
+              self.winner = -1
+              self.end = True
+              return self.end
+
+      # whether it's a tie
+      sum_values = np.sum(np.abs(self.data))
+      if sum_values == BOARD_SIZE:
+          self.winner = 0
+          self.end = True
+          return self.end
+
+      # game is still going on
+      self.end = False
+      return self.end
+  \end{lstlisting}
+  	  \end{frame}
+  \begin{frame}[fragile]{State Functions - next\_state(State, i, j, symbol)}
+  	\begin{itemize}
+  		\item Add a move to the board
+  	\end{itemize}
+  	\begin{lstlisting}[language=Python]
+def next_state(self, i, j, symbol):
+    new_state = State()
+    new_state.data = np.copy(self.data)
+    new_state.data[i, j] = symbol
+    return new_state	
+ \end{lstlisting}
+  \end{frame}
+
+\begin{frame}[fragile]{Global State Functions}
+	\begin{itemize}
+		\item These get all of the states that are possible to attain from gameplay:
+	\end{itemize}
+\begin{lstlisting}[language=Python]
+def get_all_states():
+    current_symbol = 1
+    current_state = State()
+    all_states = dict()
+    all_states[current_state.hash()] = (current_state, current_state.is_end())
+    get_all_states_impl(current_state, current_symbol, all_states)
+    return all_states
+\end{lstlisting}
+\begin{lstlisting}[language=Python]
+def get_all_states_impl(current_state, current_symbol, all_states):
+    for i in range(BOARD_ROWS):
+        for j in range(BOARD_COLS):
+            if current_state.data[i][j] == 0:
+                new_state = current_state.next_state(i, j, current_symbol)
+                new_hash = new_state.hash()
+                if new_hash not in all_states:
+                    is_end = new_state.is_end()
+                    all_states[new_hash] = (new_state, is_end)
+                    if not is_end:
+                        get_all_states_impl(new_state, -current_symbol, all_states)
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{Player Functions - reset(Player), set\_state(Player, State)}
+\begin{itemize}
+	\item Return the player to the beginning of the game, resetting the attained states and their respective choices
+\end{itemize}
+\begin{lstlisting}[language=Python]
+def reset(self):
+    self.states = []
+    self.greedy = []
+\end{lstlisting}
+\begin{itemize}
+	\item Add a State to the list, with a greedy choice
+\end{itemize}
+\begin{lstlisting}[language=Python]
+def set_state(self, state):
+    self.states.append(state)
+    self.greedy.append(True)
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{Player Functions - set\_symbol(Player, symbol)}
+\begin{itemize}
+	\item Add a symbol ($\{1,-1\} \equiv \{X,O\}$), and the initial estimations
+\end{itemize}
+\begin{lstlisting}[language=Python]
+def set_symbol(self, symbol):
+    self.symbol = symbol
+    for hash_val in all_states:
+        state, is_end = all_states[hash_val]
+        if is_end:
+            if state.winner == self.symbol:
+                self.estimations[hash_val] = 1.0
+            elif state.winner == 0:
+                # we need to distinguish between a tie and a lose
+                self.estimations[hash_val] = 0.5
+            else:
+                self.estimations[hash_val] = 0
+        else:
+            self.estimations[hash_val] = 0.5
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{Player Functions - backup(Player)}
+\begin{itemize}
+	\item After each game, update the estimations using TD learning
+\end{itemize}
+\begin{lstlisting}[language=Python]
+def backup(self):
+    states = [state.hash() for state in self.states]
+
+    for i in reversed(range(len(states) - 1)):
+        state = states[i]
+        td_error = self.greedy[i] * (
+            self.estimations[states[i + 1]] - self.estimations[state]
+        )
+        self.estimations[state] += self.step_size * td_error
+\end{lstlisting}
+Math:
+\[V(S_t) = V(S_t) + \alpha \Big[V(S_{t+1})-V(S_t)\Big] \]
+\end{frame}
+\begin{frame}[fragile]{Player Functions - act(Player)}
+\begin{itemize}
+	\item Choose an action, based on $\texttt{rand()}\sim \text{Uniform}[0,1)$ and $\varepsilon$
+\end{itemize}
+\begin{lstlisting}[language=Python]
+def act(self):
+    state = self.states[-1]
+    next_states = []
+    next_positions = []
+    for i in range(BOARD_ROWS):
+        for j in range(BOARD_COLS):
+            if state.data[i, j] == 0:
+                next_positions.append([i, j])
+                next_states.append(state.next_state(
+                    i, j, self.symbol).hash())
+    if np.random.rand() < self.epsilon:
+        action = next_positions[np.random.randint(len(next_positions))]
+        action.append(self.symbol)
+        self.greedy[-1] = False
+        return action
+    values = []
+    for hash_val, pos in zip(next_states, next_positions):
+        values.append((self.estimations[hash_val], pos))
+    # to select one of the actions of equal value at random due to Python's sort is stable
+    np.random.shuffle(values)
+    values.sort(key=lambda x: x[0], reverse=True)
+    action = values[0][1]
+    action.append(self.symbol)
+    return action
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{Player Functions - save\_policy(Player) / load\_policy(Player)}
+\begin{itemize}
+	\item Save the estimations and load them later. I did this very differently, where I had the train function return the converged expectations and kept them as variables. I don't understand why they did it like this.
+\end{itemize}
+\begin{lstlisting}[language=Python]
+def save_policy(self):
+    with open('policy_%s.bin' % ('first' if self.symbol == 1 else 'second'), 'wb') as f:
+        pickle.dump(self.estimations, f)
+
+def load_policy(self):
+    with open('policy_%s.bin' % ('first' if self.symbol == 1 else 'second'), 'rb') as f:
+        self.estimations = pickle.load(f)
+\end{lstlisting}
+\end{frame}
+\begin{frame}{The Judger Class}
+	\begin{itemize}
+		\item Why does this exist?
+		\item Short answer: functional programming
+		\item Long answer: It's significantly easier to put this all in a different class, rather than having to alternate the players / define the parameters of the game manually. 
+		\item Tldr: It's slightly annoying but makes it easier to change the game. See Extensions below.
+	\end{itemize}
+\end{frame}
+\begin{frame}[fragile]{Judger Functions - reset(Judger) / alternate(Judger)}
+\begin{itemize}
+	\item Reset the two players
+\end{itemize}
+\begin{lstlisting}[language=Python]
+def reset(self):
+    self.p1.reset()
+    self.p2.reset()
+\end{lstlisting}
+\begin{itemize}
+	\item Switch who plays $X$ and who plays $O$
+\end{itemize}
+\begin{lstlisting}[language=Python]
+def alternate(self):
+    while True:
+        yield self.p1
+        yield self.p2
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{Judger Functions - play(Judger)}
+\begin{itemize}
+	\item Run a single iteration of the game
+\end{itemize}
+\begin{lstlisting}[language=Python]
+def play(self):
+    alternator = self.alternate()
+    self.reset()
+    current_state = State()
+    self.p1.set_state(current_state)
+    self.p2.set_state(current_state)
+    while True:
+        player = next(alternator)
+        i, j, symbol = player.act()
+        next_state_hash = current_state.next_state(i, j, symbol).hash()
+        current_state, is_end = all_states[next_state_hash]
+        self.p1.set_state(current_state)
+        self.p2.set_state(current_state)
+        if is_end:
+            return current_state.winner
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{Global Functions - train(epochs, print\_every\_n=500)}
+	\begin{itemize}
+		\item Play $N = $ epochs games, printing results every 500 iterations. Have each player learn after each game.
+	\end{itemize}
+\begin{lstlisting}[language=Python]
+def train(epochs, print_every_n=500):
+    player1 = Player(epsilon=0.01)
+    player2 = Player(epsilon=0.01)
+    judger = Judger(player1, player2)
+    player1_win = 0.0
+    player2_win = 0.0
+    for i in range(1, epochs + 1):
+        winner = judger.play(print_state=False)
+        if winner == 1:
+            player1_win += 1
+        if winner == -1:
+            player2_win += 1
+        if i % print_every_n == 0:
+            print('Epoch %d, player 1 winrate: %.02f, player 2 winrate: %.02f' % (i, player1_win / i, player2_win / i))
+        player1.backup()
+        player2.backup()
+        judger.reset()
+    player1.save_policy()
+    player2.save_policy()
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{Global Functions - compete(turns)}
+\begin{itemize}
+	\item Play for \texttt{turns} games, where each player is always greedy
+\end{itemize}
+\begin{lstlisting}[language=Python]
+def compete(turns):
+    player1 = Player(epsilon=0)
+    player2 = Player(epsilon=0)
+    judger = Judger(player1, player2)
+    player1.load_policy()
+    player2.load_policy()
+    player1_win = 0.0
+    player2_win = 0.0
+    for _ in range(turns):
+        winner = judger.play()
+        if winner == 1:
+            player1_win += 1
+        if winner == -1:
+            player2_win += 1
+        judger.reset()
+    print('%d turns, player 1 win %.02f, player 2 win %.02f' % (turns, player1_win / turns, player2_win / turns))
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{Actual Code}
+	\begin{itemize}
+		\item Now that we have all the functions, this is all we need:
+	\end{itemize}
+\begin{lstlisting}[language=Python]
+import numpy as np
+import pickle
+
+BOARD_ROWS = 3
+BOARD_COLS = 3
+BOARD_SIZE = BOARD_ROWS * BOARD_COLS
+all_states = get_all_states()
+
+train(int(1e5))
+compete(int(1e3))
+play()
+\end{lstlisting}
+\end{frame}
+  
+  
+  
+\section{Extensions}
+  
+  
+\begin{frame}{Questions}
+\begin{enumerate}
+	\item What happens if a tie is treated as a loss?
+	\item (Marco) What if we start at the analytic solution (henceforth, minimax estimations)?
+	\item What happens if we start with random estimations?
+	\item What happens if we train against a random player rather than a reinforcement learner?
+\end{enumerate}
+\end{frame}
+\begin{frame}{Models}
+	\begin{itemize}
+		\item Since I used Julia, I was able to train for 3m epochs (with $\varepsilon=0.1$) fairly easily. I initialized five different learners: \begin{enumerate}
+			\item Baseline, win worth 1, tie worth 0.5, loss worth 0
+			\item Minimax, where we start at the minimax estimations
+			\item Random, starting at random estimations
+			\item No Ties, Baseline but ties worth 0
+			\item Against Random, Baseline but trained against a random mover
+		\end{enumerate}
+	\end{itemize}
+\end{frame}
+\begin{frame}{Competition Results}
+	\begin{itemize}
+		\item I played the models against each other for 10,000 rounds
+		\item Baseline, Minimax, No Ties, and Against Random all were able to attain 100\% tie rate (except when No Ties was playing $O$, of course)
+		\item Random, where we drew each initial estimation from $\text{Uniform}[0,1)$, lost every game against the other models
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Estimation Differences ($X$ Player)}
+\includegraphics<1>[width=10cm]{p1_estimations_1.png}	
+\includegraphics<2>[width=10cm]{p1_estimations_2.png}	
+\includegraphics<3>[width=10cm]{p1_estimations_3.png}	
+\includegraphics<4>[width=10cm]{p1_estimations_4.png}	
+\includegraphics<5>[width=10cm]{p1_estimations_5.png}	
+\includegraphics<6>[width=10cm]{p1_estimations_6.png}	
+\includegraphics<7>[width=10cm]{p1_estimations_7.png}	
+\end{frame}
+
+ \begin{frame}{Estimation Differences ($O$ Player)}
+\includegraphics<1>[width=10cm]{p2_estimations_1.png}	
+\includegraphics<2>[width=10cm]{p2_estimations_2.png}	
+\includegraphics<3>[width=10cm]{p2_estimations_3.png}	
+\includegraphics<4>[width=10cm]{p2_estimations_4.png}	
+\includegraphics<5>[width=10cm]{p2_estimations_5.png}	
+\includegraphics<6>[width=10cm]{p2_estimations_6.png}	
+\includegraphics<7>[width=10cm]{p2_estimations_7.png}	
+\end{frame}
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+\end{document}

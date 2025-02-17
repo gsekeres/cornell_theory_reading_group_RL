@@ -30,12 +30,6 @@ p1_win_initial, p2_win_initial = compete(10_000, p1_estimations_initial, p2_esti
 
 # Python replication complete, now time for some fun experiments.
 
-# Then play all of the above against each other, as well as initial random players,
-# and minimax players. Compare winrates over 10,000 games, make a matrix of results.
-
-# If have time, implement a wrapper to play against a human in a nice way.
-# If have time, figure out some (principled) way to compare evaluations of different players.
-
 # Short training runs (100k epochs, eps = 0.01)
 
 # Start from minimax evaluations
