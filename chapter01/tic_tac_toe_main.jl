@@ -190,6 +190,8 @@ _,_ = compete(10_000, p1_estimations_full_random, p2_estimations_full_against_ra
 
 # Plot the fitted estimations of the players:
 using Plots
+# Set transparent background
+default(background_color=:transparent)
 
 # Sort by the baseline full fitted estimations:
 p1_all_hashes = collect(keys(p1_estimations_full_baseline))
