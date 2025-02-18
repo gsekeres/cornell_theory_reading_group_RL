@@ -7,7 +7,7 @@ When contributing -- please add your name to the list of contributors and the MI
 
 Contributors: 
  - [Gabriel Sekeres](https://gabesekeres.com/)
- - [Fenglin (Finn) Ye](https://people.as.cornell.edu/sites/default/files/styles/person_image/public/2024-10/ye.jpg)
+ - [Fenglin (Finn) Ye](http://finnyeee.site)
 
 # Contents
 
@@ -21,4 +21,4 @@ Python code for the 10-armed bandit example, with Julia code replicating those r
 
 ### Chapter 3
 
-Python code for the finite Markov example, with slides explaining the code and environment. Python code from [Shangtong Zhang](https://github.com/ShangtongZhang/reinforcement-learning-an-introduction), slides written by [Finn](https://people.as.cornell.edu/sites/default/files/styles/person_image/public/2024-10/ye.jpg).
+Python code for the finite Markov example, with slides explaining the code and environment. Python code from [Shangtong Zhang](https://github.com/ShangtongZhang/reinforcement-learning-an-introduction), slides written by [Finn](http://finnyeee.site).
