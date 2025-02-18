@@ -14,12 +14,7 @@ mutable struct State
     best_move::Union{Tuple{Int,Int},Nothing}
     # Best score for the state
     best_score::Union{Float64,Nothing}
-    # Functions for the State struct
-    # (these are inherent to a certain state
-    # and not dependent on the player)
-    """
-    Constructor for the State struct.
-    """
+
     function State()
         new(zeros(Int, BOARD_ROWS, BOARD_COLS), nothing, nothing, nothing, nothing, nothing)
     end
@@ -81,6 +76,8 @@ end
 
 # State functions:
 """
+    hash_state(state::State) -> Int
+
 Generate a unique hash for the state.
 """
 function hash_state(state::State)
@@ -94,7 +91,9 @@ function hash_state(state::State)
 end
 
 """
-Check if the game is over.
+    check_end(state::State) -> Bool
+
+Check if the game is over, and set the winner if so.
 """
 function check_end(state::State)
     # if is_end already known, just return
@@ -147,6 +146,8 @@ function check_end(state::State)
 end
 
 """
+    next_state(state::State, i::Int, j::Int, symbol::Int) -> State
+
 Generate a new state with a move made.
 """
 function next_state(state::State, i::Int, j::Int, symbol::Int)
@@ -157,6 +158,8 @@ function next_state(state::State, i::Int, j::Int, symbol::Int)
 end
 
 """
+    print_board_state(state::State)
+
 Print the board state.
 """
 function print_board_state(state::State)
@@ -179,7 +182,9 @@ function print_board_state(state::State)
 end
 
 """
-Build all possible states.
+    build_all_states() -> Dict{Int, Tuple{State, Bool, Vector{Tuple{Int,Int}}, Float64}}
+
+Build all possible states, where the key is the hash of the state.
 """
 function build_all_states()
     all_states = Dict{Int, Tuple{State, Bool, Vector{Tuple{Int,Int}}, Float64}}()
@@ -215,6 +220,8 @@ function build_all_states()
 end
 
 """
+    fill_minimax!(all_states::Dict{Int, Tuple{State,Bool,Vector{Tuple{Int,Int}},Float64}})
+
 Fill the minimax cache (of values) for the given states.
 """
 function fill_minimax!(all_states::Dict{Int, Tuple{State,Bool,Vector{Tuple{Int,Int}},Float64}})
@@ -274,9 +281,11 @@ function fill_minimax!(all_states::Dict{Int, Tuple{State,Bool,Vector{Tuple{Int,I
     end
 end
 """
+    fill_minimax_bestmoves!(all_states::Dict{Int, Tuple{State,Bool,Vector{Tuple{Int,Int}},Float64}})
+
 Fill the minimax cache (of best moves) for the given states.
 """
-function fill_minimax_bestmoves!(all_states)
+function fill_minimax_bestmoves!(all_states::Dict{Int, Tuple{State,Bool,Vector{Tuple{Int,Int}},Float64}})
     # first get the minimax values as above
     fill_minimax!(all_states)
 
@@ -309,7 +318,9 @@ end
 
 # Player functions:
 """
-Reset the player.
+    reset!(player::RLPlayer)
+
+Reset the player's states and greedy vectors.
 """
 function reset!(player::RLPlayer)
     player.states = []
@@ -317,7 +328,9 @@ function reset!(player::RLPlayer)
 end
 
 """
-Set the state of the player.
+    set_state!(player::RLPlayer, state::State)
+
+Push a new move to the player's states and greedy vectors.
 """
 function set_state!(player::RLPlayer, state::State)
     push!(player.states, state)
@@ -325,7 +338,13 @@ function set_state!(player::RLPlayer, state::State)
 end
 
 """
+    set_symbol!(player::RLPlayer, symbol::Int, type::String; estimations::Dict{Int,Float64}=Dict{Int,Float64}())
+
 Set the symbol of the player, and initialize the estimations from the type.
+ - rlBase: Use 1 for win, 0.5 for tie, 0 for loss.
+ - rlNoTies: Use 1 for win, 0 for loss or tie.
+ - rlMinimax: Use the minimax value.
+ - rlRandom: Use a random value.
 """
 function set_symbol!(player::RLPlayer, symbol::Int, type::String; estimations::Dict{Int,Float64}=Dict{Int,Float64}())
     player.symbol = symbol
@@ -393,7 +412,9 @@ end
 
 
 """
-Backup the player (update the estimations).
+    backup!(player::RLPlayer)
+
+Update the player's estimations using the TD(0) algorithm.
 """
 function backup!(player::RLPlayer)
     states = [hash_state(state) for state in player.states]
@@ -405,7 +426,11 @@ function backup!(player::RLPlayer)
     end
 end
 """
-Call RL player to act.
+    act!(player::RLPlayer, state::State) -> Tuple{Int, Int, Int, Bool}
+
+Call RL player to act, returning the action, the next symbol, and whether it is greedy.
+ - if rand() < epsilon, the action is random.
+ - otherwise, the action is the greedy action.
 """
 function act!(player::RLPlayer, state::State)
     next_sym = sum(abs.(state.data)) % 2 == 0 ? 1 : -1
@@ -441,13 +466,17 @@ function act!(player::RLPlayer, state::State)
 end
 
 """
-Reset the human player.
+    reset!(player::HumanPlayer)
+
+Reset the human player (does nothing).
 """
 function reset!(player::HumanPlayer)
     # No state to reset for human player
 end
 
 """
+    set_state!(player::HumanPlayer, state::State)
+
 Set the state of the human player.
 """
 function set_state!(player::HumanPlayer, state::State)
@@ -455,6 +484,8 @@ function set_state!(player::HumanPlayer, state::State)
 end
 
 """
+    set_symbol!(player::HumanPlayer, symbol::Int)
+
 Set the symbol of the human player.
 """
 function set_symbol!(player::HumanPlayer, symbol::Int)
@@ -463,7 +494,10 @@ end
 
 
 """
-Call human player to act.
+    act!(player::HumanPlayer, state::State) -> Tuple{Int, Int, Int, Bool}
+
+Call human player to act. Takes in a number between 1 and 9, 
+and moves to the corresponding position.
 Human interface:
 | 1 | 2 | 3 |
 | 4 | 5 | 6 |
@@ -497,7 +531,9 @@ end
 
 # Judger functions:
 """
-Reset the judger.
+    reset!(judger::Judger)
+
+Reset the judger, resetting the players and the current state to empty.
 """
 function reset!(judger::Judger)
     reset!(judger.p1)
@@ -507,7 +543,9 @@ function reset!(judger::Judger)
 end
 
 """
-Play a game.
+    play(judger::Judger) -> Int
+
+Play a game, returning the winner.
 """
 function play(judger::Judger)
     reset!(judger)
@@ -554,7 +592,9 @@ end
 
 # Universal functions:
 """
-Train the RLPlayer, over a number of epochs, printing the winrate every n epochs.
+    train(epochs::Int, p1::RLPlayer, p2::RLPlayer; print_every_n=500) -> Tuple{Dict{Int,Float64}, Dict{Int,Float64}}
+
+Train the RLPlayer, over a number of epochs, printing the winrate every n epochs. Return the trained estimations.
 """
 function train(epochs::Int, p1::RLPlayer, p2::RLPlayer; print_every_n=500)
     player1 = p1
@@ -583,7 +623,9 @@ function train(epochs::Int, p1::RLPlayer, p2::RLPlayer; print_every_n=500)
 end
 
 """
-Make two RLPlayers compete over a number of turns, never exploring.
+    compete(turns::Int, p1_estimations::Dict{Int,Float64}, p2_estimations::Dict{Int,Float64}; print::Bool=true) -> Tuple{Float64, Float64}
+
+Make two RLPlayers compete over a number of turns, never exploring. Return the winrates.
 """
 function compete(turns::Int, p1_estimations::Dict{Int,Float64}, p2_estimations::Dict{Int,Float64}; print::Bool=true)
     player1 = RLPlayer(symbol=1, step_size=0.0, epsilon=0.0)
@@ -609,7 +651,9 @@ function compete(turns::Int, p1_estimations::Dict{Int,Float64}, p2_estimations::
 end
 
 """
-Play a game against the human player.
+    play_human(estimations::Dict{Int,Float64}, symbol::Int)
+
+Play games against the human player. Begin with the human player as player 1, then switch roles once the human player chooses to play again.
 """
 function play_human(estimations::Dict{Int,Float64}, symbol::Int)
     if symbol == -1
