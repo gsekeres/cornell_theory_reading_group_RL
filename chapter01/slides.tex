@@ -51,9 +51,9 @@
   \begin{frame}{Class Functions}
   		Each class has a set of functions inherent to it. They only use that class's elements. In Python, they are defined in the class, in Julia you define them elsewhere. Each class has a constructor function, where you call \textit{e.g.} \texttt{State()} to build a state.
   		
-  		\textbf{\textit{Remark.}} Best practice is \textcolor{blue}{\href{https://en.wikipedia.org/wiki/Functional_programming}{functional programming}}, for speed, modularity, and readability. The vast majority of what we'll do is defining functions of different types
+  		\emph{Remark.} Best practice is \alert{\href{https://en.wikipedia.org/wiki/Functional_programming}{functional programming}}, for speed, modularity, and readability. The vast majority of what we'll do is defining functions of different types
   \end{frame}
-    \begin{frame}[fragile]{State Functions - hash(State)}
+    \begin{frame}[fragile]{State Functions - hash(State) $\to$ hash\_val}
  		\begin{itemize}
  			\item Take in a certain state, and assign it a unique number (the hash value)
  		\end{itemize}
@@ -66,7 +66,7 @@ def hash(self):
     return self.hash_val
 \end{lstlisting}
   \end{frame}
-  \begin{frame}[fragile]{State Functions - is\_end(State) Part 1}
+  \begin{frame}[fragile]{State Functions - is\_end(State) $\to$ end Part 1}
   \begin{itemize}
   	\item Take in a board, check if the game is over, if so add the winner and end value to the state, otherwise add false for both.
   \end{itemize}
@@ -91,7 +91,7 @@ def is_end(self):
     results.append(reverse_trace)
 \end{lstlisting}
   	  \end{frame}
-  \begin{frame}[fragile]{State Functions - is\_end(State) Part 2}
+  \begin{frame}[fragile]{State Functions - is\_end(State) $\to$ end Part 2}
   \begin{lstlisting}[language=Python]
       for result in results:
           if result == 3:
@@ -115,7 +115,7 @@ def is_end(self):
       return self.end
   \end{lstlisting}
   	  \end{frame}
-  \begin{frame}[fragile]{State Functions - next\_state(State, i, j, symbol)}
+  \begin{frame}[fragile]{State Functions - next\_state(State, i, j, symbol) $\to$ State}
   	\begin{itemize}
   		\item Add a move to the board
   	\end{itemize}
@@ -128,7 +128,7 @@ def next_state(self, i, j, symbol):
  \end{lstlisting}
   \end{frame}
 
-\begin{frame}[fragile]{Global State Functions}
+\begin{frame}[fragile]{Global State Functions ($\to$ all\_states)}
 	\begin{itemize}
 		\item These get all of the states that are possible to attain from gameplay:
 	\end{itemize}
@@ -212,7 +212,7 @@ def backup(self):
 Math:
 \[V(S_t) = V(S_t) + \alpha \Big[V(S_{t+1})-V(S_t)\Big] \]
 \end{frame}
-\begin{frame}[fragile]{Player Functions - act(Player)}
+\begin{frame}[fragile]{Player Functions - act(Player) $\to$ (action, symbol)}
 \begin{itemize}
 	\item Choose an action, based on $\texttt{rand()}\sim \text{Uniform}[0,1)$ and $\varepsilon$
 \end{itemize}
@@ -284,7 +284,7 @@ def alternate(self):
         yield self.p2
 \end{lstlisting}
 \end{frame}
-\begin{frame}[fragile]{Judger Functions - play(Judger)}
+\begin{frame}[fragile]{Judger Functions - play(Judger) $\to$ winner}
 \begin{itemize}
 	\item Run a single iteration of the game
 \end{itemize}
