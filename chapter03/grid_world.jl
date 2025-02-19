@@ -385,7 +385,7 @@ function plot_grid_world_matrix_style(WORLD_SIZE, REWARD_STATES, REWARD_NEXT_STA
     # Basic plot: no ticks, no frame, aspect ratio = 1:1
     plt = plot(
         xlim=(0.5, nx+0.5), ylim=(0.5, ny+0.5),
-        size=(400, 400),
+        size=(4000, 4000),
         aspect_ratio=:equal,
         legend=false,
         framestyle=:none,  # remove bounding box
@@ -580,4 +580,33 @@ savefig(plt_policy05, "cornell_theory_reading_group_RL/chapter03/grid_world_poli
 plt_value_random = plot_value_function(Vrandom, WORLD_SIZE)
 plot!(plt_value_random, title="Value Function (random policy, gamma=0.9)")
 savefig(plt_value_random, "cornell_theory_reading_group_RL/chapter03/grid_world_value_random.png")
+
+
+# Note this does not perfectly work. I am troubleshooting when I have time - Gabe
+using Random
+# Large grid to see the basins of attraction
+WORLD_SIZE = [100, 100]
+random_states_1 = zeros(10)
+random_states_2 = zeros(10)
+random_states_3 = zeros(10)
+random_states_4 = zeros(10)
+rand!(random_states_1)
+rand!(random_states_2)
+rand!(random_states_3)
+rand!(random_states_4)
+random_states_1 = floor.(Int, random_states_1 * WORLD_SIZE[1])
+random_states_2 = floor.(Int, random_states_2 * WORLD_SIZE[2])
+random_states_3 = floor.(Int, random_states_3 * WORLD_SIZE[1])
+random_states_4 = floor.(Int, random_states_4 * WORLD_SIZE[2])
+REWARD_STATES = [[random_states_1[1], random_states_2[1]], [random_states_1[2], random_states_2[2]]]
+REWARD_VALUES = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+REWARD_NEXT_STATES = [[random_states_3[1], random_states_4[1]], [random_states_3[2], random_states_4[2]]]
+
+Vlarge, policylarge = get_optimal_policy(0.9; WORLD_SIZE, REWARD_STATES, REWARD_VALUES, REWARD_NEXT_STATES)
+
+plt_cycle_large = plot_grid_world_matrix_style(WORLD_SIZE, REWARD_STATES, REWARD_NEXT_STATES, full_path)
+savefig(plt_cycle_large, "cornell_theory_reading_group_RL/chapter03/grid_world_cycle_large.png")
+
+plt_value_large = plot_value_function(Vlarge, WORLD_SIZE)
+savefig(plt_value_large, "cornell_theory_reading_group_RL/chapter03/grid_world_value_large.png")
 =#
