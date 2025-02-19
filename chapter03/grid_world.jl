@@ -459,11 +459,11 @@ function plot_grid_world_matrix_style(WORLD_SIZE, REWARD_STATES, REWARD_NEXT_STA
 end
 
 """
-    plot_value_function(V, WORLD_SIZE)
+    plot_value_function(V, WORLD_SIZE; text=true)
 
-Constructs a heatmap of the value function V over the grid.
+Constructs a heatmap of the value function V over the grid (with text if text=true).
 """
-function plot_value_function(V, WORLD_SIZE)
+function plot_value_function(V, WORLD_SIZE; write=true, color_type=:blues)
     nx, ny = WORLD_SIZE
     mat = zeros(nx, ny)
     for x in 1:nx
@@ -471,10 +471,12 @@ function plot_value_function(V, WORLD_SIZE)
             mat[y, x] = V[(x,y)]
         end
     end
-    plt = heatmap(1:nx, 1:ny, mat, color=:blues, aspect_ratio=:equal, xticks=[], yticks=[], framestyle=:none, colorbar=false)
-    for x in 1:nx
-        for y in 1:ny
-            annotate!(plt, x, y, text(round(mat[y, x], digits=1), :white, :center))
+    plt = heatmap(1:nx, 1:ny, mat, color=color_type, aspect_ratio=:equal, xticks=[], yticks=[], framestyle=:none, colorbar=false)
+    if write
+        for x in 1:nx
+            for y in 1:ny
+                annotate!(plt, x, y, text(round(mat[y, x], digits=1), :white, :center))
+            end
         end
     end
     return plt
@@ -561,7 +563,7 @@ Vrandom = get_value_random_policy(0.9; WORLD_SIZE, REWARD_STATES, REWARD_VALUES,
 plt_cycle = plot_grid_world_matrix_style(WORLD_SIZE, REWARD_STATES, REWARD_NEXT_STATES, full_path)
 savefig(plt_cycle, "cornell_theory_reading_group_RL/chapter03/grid_world_cycle.png")
 
-plt_value = plot_value_function(V1, WORLD_SIZE)
+plt_value = plot_value_function(V1, WORLD_SIZE; write=true)
 plot!(plt_value, title="Value Function (gamma=1)")
 savefig(plt_value, "cornell_theory_reading_group_RL/chapter03/grid_world_value_1.png")
 
@@ -569,7 +571,7 @@ plt_policy = plot_policy(policy1, WORLD_SIZE)
 plot!(plt_policy, title="Best Policy (gamma=1)")
 savefig(plt_policy, "cornell_theory_reading_group_RL/chapter03/grid_world_policy_1.png")
 
-plt_value05 = plot_value_function(V05, WORLD_SIZE)
+plt_value05 = plot_value_function(V05, WORLD_SIZE; write=true)
 plot!(plt_value05, title="Value Function (gamma=0.5)")
 savefig(plt_value05, "cornell_theory_reading_group_RL/chapter03/grid_world_value_05.png")
 
@@ -577,7 +579,7 @@ plt_policy05 = plot_policy(policy05, WORLD_SIZE)
 plot!(plt_policy05, title="Best Policy (gamma=0.5)")
 savefig(plt_policy05, "cornell_theory_reading_group_RL/chapter03/grid_world_policy_05.png")
 
-plt_value_random = plot_value_function(Vrandom, WORLD_SIZE)
+plt_value_random = plot_value_function(Vrandom, WORLD_SIZE; write=true)
 plot!(plt_value_random, title="Value Function (random policy, gamma=0.9)")
 savefig(plt_value_random, "cornell_theory_reading_group_RL/chapter03/grid_world_value_random.png")
 
@@ -586,27 +588,24 @@ savefig(plt_value_random, "cornell_theory_reading_group_RL/chapter03/grid_world_
 using Random
 # Large grid to see the basins of attraction
 WORLD_SIZE = [100, 100]
-random_states_1 = zeros(10)
-random_states_2 = zeros(10)
-random_states_3 = zeros(10)
-random_states_4 = zeros(10)
-rand!(random_states_1)
-rand!(random_states_2)
-rand!(random_states_3)
-rand!(random_states_4)
-random_states_1 = floor.(Int, random_states_1 * WORLD_SIZE[1])
-random_states_2 = floor.(Int, random_states_2 * WORLD_SIZE[2])
-random_states_3 = floor.(Int, random_states_3 * WORLD_SIZE[1])
-random_states_4 = floor.(Int, random_states_4 * WORLD_SIZE[2])
-REWARD_STATES = [[random_states_1[1], random_states_2[1]], [random_states_1[2], random_states_2[2]]]
+random_states_1 = zeros(Int, 10)
+random_states_2 = zeros(Int, 10)
+random_states_3 = zeros(Int, 10)
+random_states_4 = zeros(Int, 10)
+rand!(random_states_1, 1:WORLD_SIZE[1])
+rand!(random_states_2, 1:WORLD_SIZE[2])
+rand!(random_states_3, 1:WORLD_SIZE[1])
+rand!(random_states_4, 1:WORLD_SIZE[2])
+REWARD_STATES = [[random_states_1[i], random_states_2[i]] for i in 1:10]
 REWARD_VALUES = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
-REWARD_NEXT_STATES = [[random_states_3[1], random_states_4[1]], [random_states_3[2], random_states_4[2]]]
+REWARD_NEXT_STATES = [[random_states_3[i], random_states_4[i]] for i in 1:10]
 
-Vlarge, policylarge = get_optimal_policy(0.9; WORLD_SIZE, REWARD_STATES, REWARD_VALUES, REWARD_NEXT_STATES)
+Vlarge, policylarge = get_optimal_policy(0.995; WORLD_SIZE, REWARD_STATES, REWARD_VALUES, REWARD_NEXT_STATES)
 
 plt_cycle_large = plot_grid_world_matrix_style(WORLD_SIZE, REWARD_STATES, REWARD_NEXT_STATES, full_path)
 savefig(plt_cycle_large, "cornell_theory_reading_group_RL/chapter03/grid_world_cycle_large.png")
 
-plt_value_large = plot_value_function(Vlarge, WORLD_SIZE)
+plt_value_large = plot_value_function(Vlarge, WORLD_SIZE; write=false, color_type=:thermal)
+plot!(plt_value_large, title="Value Function (gamma=0.995, 100x100 grid)")
 savefig(plt_value_large, "cornell_theory_reading_group_RL/chapter03/grid_world_value_large.png")
 =#
