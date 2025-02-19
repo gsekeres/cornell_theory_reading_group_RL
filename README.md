@@ -22,3 +22,7 @@ Python code for the 10-armed bandit example, with Julia code replicating those r
 ### Chapter 3
 
 Python code for the finite Markov example, with slides explaining the code and environment. Python code from [Shangtong Zhang](https://github.com/ShangtongZhang/reinforcement-learning-an-introduction), slides written by [Finn](http://finnyeee.site).
+
+### Chapter 4
+
+Python code for dynamic programming, with slides explaining the code and environment. Python code from [Shangtong Zhang](https://github.com/ShangtongZhang/reinforcement-learning-an-introduction), slides written by [Finn](http://finnyeee.site).
