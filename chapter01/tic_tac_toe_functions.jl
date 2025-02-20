@@ -122,11 +122,11 @@ function check_end(state::State)
 
     # check winners
     for r in results
-        if r == 3
+        if r == BOARD_ROWS
             state.winner = 1
             state.is_end = true
             return true
-        elseif r == -3
+        elseif r == -BOARD_ROWS
             state.winner = -1
             state.is_end = true
             return true

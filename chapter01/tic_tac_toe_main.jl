@@ -5,6 +5,11 @@ const BOARD_ROWS = 3
 const BOARD_COLS = 3
 const BOARD_SIZE = BOARD_ROWS * BOARD_COLS
 
+# A small annoyance with the logic here:
+if BOARD_ROWS != BOARD_COLS
+    throw(ArgumentError("BOARD_ROWS and BOARD_COLS must be equal, because Tic Tac Toe is not well-defined for non-square boards."))
+end
+
 include("tic_tac_toe_functions.jl")
 
 # Get all possible board configurations
