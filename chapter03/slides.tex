@@ -27,12 +27,18 @@
         \item Time steps are discrete: $t=0,1,2,\cdots$
         \item At each step, the agent receives information on the current state $S_t\in S$ and selects their action $A_t \in A(S_t)$.
         \item Depending on the action, the agent receives a reward $R_{t+1}\in R\subset\RR$ and moves to the next state $S_{t+1}$.
+        \item The \textbf{dynamics} can be described using the probability $p$ defined by
+        \[
+        p(s',r|s,a)=P\{S_t = s', R_t = r|S_{t-1}=s,A_{t-1}=a\}
+        \]
     \end{enumerate}
 
-    A sequence follows like:
-    \[
-    S_0,A_0,R_1,S_1,A_1,R_2,S_2,\cdots
-    \]
+    A sequence follows like $S_0,A_0,R_1,S_1,A_1,R_2,S_2,\cdots$
+    
+    \begin{minipage}{\linewidth}
+    \centering
+    \includegraphics[width=0.8\linewidth]{F31.png}
+    \end{minipage}
 \end{frame}
 
 \begin{frame}{Returns}
@@ -66,5 +72,45 @@ The world is defined as a $5\times 5$ grid. At each cell on the grid, the action
 If the agent takes an action that will bring them off grid, their location will remain unchanged and receive a reward of $-1$.
 
 Any action at state $A$ brings the agent to $A'$ and gives a reward of 10. Any action at state $B$ brings the agent to $B'$ and gives a reward of $5$. All other actions give a reward of 0.
+\end{frame}
+
+\begin{frame}{Pseudo Code for Grid World}
+    \begin{itemize}
+        \item $\pi:$ each direction is played with same probability.
+        \item Define the world size, possible actions, and rewards.
+    \end{itemize}
+    \begin{enumerate}
+        \item Solve $v_\pi$ with linear system
+            \begin{itemize}
+                \item Solve for 
+                \[
+                v_\pi(s) = \sum_a \pi(a|s) \sum_{s',r}p(s',r|s,a)[r+\delta v_\pi(s')],\quad \forall s\in S
+                \]
+            \end{itemize}
+
+        \item Solve $v_\pi$ by value function iteration
+            \begin{itemize}
+                \item Set an initial guess for $v_k$.
+                \item \textbf{Loop} 
+                
+                Update $v_k$ with Bellman equation using $\pi$ given.
+
+                If $|v_{k+1}-v_k|$ is small enough, the loop ends and we find the solution.
+            \end{itemize}
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}{Pseudo Code for Grid World}
+    \begin{itemize}
+        \item We want to find the optimal policy $\pi^*$ and corresponding $v_\pi^*$.
+        \item Set an initial guess for $v_k$.
+        \item \textbf{Loop}
+
+        Sweeping through all $a\in A$ to find the maximum value possible and update $v_{k+1}$ with it.
+
+        If $|v_{k+1}-v_k|$ is small enough, the loop ends and we find the optional $v_\pi^*$.
+
+        \item Giving the optimal value function, sweep through possible actions to find the action that yields the optimal value. This gives the optimal policy $\pi^*$. 
+    \end{itemize}
 \end{frame}
 \end{document}
