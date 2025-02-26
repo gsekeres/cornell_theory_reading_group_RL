@@ -584,7 +584,6 @@ plot!(plt_value_random, title="Value Function (random policy, gamma=0.9)")
 savefig(plt_value_random, "cornell_theory_reading_group_RL/chapter03/grid_world_value_random.png")
 
 
-# Note this does not perfectly work. I am troubleshooting when I have time - Gabe
 using Random
 # Large grid to see the basins of attraction
 WORLD_SIZE = [100, 100]
@@ -608,4 +607,9 @@ savefig(plt_cycle_large, "cornell_theory_reading_group_RL/chapter03/grid_world_c
 plt_value_large = plot_value_function(Vlarge, WORLD_SIZE; write=false, color_type=:thermal)
 plot!(plt_value_large, title="Value Function (gamma=0.995, 100x100 grid)")
 savefig(plt_value_large, "cornell_theory_reading_group_RL/chapter03/grid_world_value_large.png")
+
+Vlarge_random = get_value_random_policy(0.995; WORLD_SIZE, REWARD_STATES, REWARD_VALUES, REWARD_NEXT_STATES)
+plt_value_large_random = plot_value_function(Vlarge_random, WORLD_SIZE; write=false, color_type=:thermal)
+plot!(plt_value_large_random, title="Value Function (random policy)")
+savefig(plt_value_large_random, "cornell_theory_reading_group_RL/chapter03/grid_world_value_large_random.png")
 =#
