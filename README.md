@@ -25,7 +25,7 @@ Python code for the finite Markov example, with slides explaining the code and e
 
 ### Chapter 4
 
-Python code for dynamic programming, with slides explaining the code and environment. Python code from [Shangtong Zhang](https://github.com/ShangtongZhang/reinforcement-learning-an-introduction), slides written by [Finn](http://finnyeee.site). Julia code extending the Python code written by [Gabe](https://gabesekeres.com/).
+Python code for dynamic programming examples (car rental and gambler's problem), with slides explaining the code and environment. Python code from [Shangtong Zhang](https://github.com/ShangtongZhang/reinforcement-learning-an-introduction), slides written by [Finn](http://finnyeee.site). Julia code extending the Python code written by [Gabe](https://gabesekeres.com/).
 
 ### Chapter 5
 
