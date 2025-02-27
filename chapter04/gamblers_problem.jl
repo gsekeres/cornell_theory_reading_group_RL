@@ -102,7 +102,7 @@ problem04 = GamblersProblem(100, 0.4)
 value04, policy04, value_history04, policy_history04 = iterate(problem04)
 
 # Value function iterations
-p04value = plot(title="Value Function Iterations for p = 0.4", xlabel="Capital", ylabel="Value", legend=:outertopright)
+p04value = plot(title="Value Function Iterations for p = 0.4", xlabel="Capital", ylabel="Value", legend=:outertopright, background=:transparent)
 
 max_iter = length(value_history04)
 iterations_to_plot = [1, 2, 3, 10]
@@ -115,7 +115,7 @@ plot!(p04value, problem04.states, value_history04[end], label="Final Iteration $
 savefig(p04value, "cornell_theory_reading_group_RL/chapter04/gamblers_problem_value_p04.png")
 
 # Final policy function
-p04policy = plot(title="Policy Function for p = 0.4", xlabel="Capital", ylabel="Policy", legend=false, size=(800, 500))
+p04policy = plot(title="Policy Function for p = 0.4", xlabel="Capital", ylabel="Policy", legend=false, size=(800, 500), background=:transparent)
 plot!(p04policy, problem04.states, policy04, marker=:circle, markersize=3)
 
 savefig(p04policy, "cornell_theory_reading_group_RL/chapter04/gamblers_problem_policy_p04.png")
@@ -125,7 +125,7 @@ problem025 = GamblersProblem(100, 0.25)
 value025, policy025, value_history025, policy_history025 = iterate(problem025)
 
 # Value function iterations
-p025value = plot(title="Value Function Iterations for p = 0.25", xlabel="Capital", ylabel="Value", legend=:outertopright)
+p025value = plot(title="Value Function Iterations for p = 0.25", xlabel="Capital", ylabel="Value", legend=:outertopright, background=:transparent)
 
 max_iter = length(value_history025)
 iterations_to_plot = [1, 2, 3, 10]
@@ -138,7 +138,7 @@ plot!(p025value, problem025.states, value_history025[end], label="Final Iteratio
 savefig(p025value, "cornell_theory_reading_group_RL/chapter04/gamblers_problem_value_p025.png")
 
 # Final policy function
-p025policy = plot(title="Policy Function for p = 0.25", xlabel="Capital", ylabel="Policy", legend=false, size=(800, 500))
+p025policy = plot(title="Policy Function for p = 0.25", xlabel="Capital", ylabel="Policy", legend=false, size=(800, 500), background=:transparent)
 plot!(p025policy, problem025.states, policy025, marker=:circle, markersize=3)
 
 savefig(p025policy, "cornell_theory_reading_group_RL/chapter04/gamblers_problem_policy_p025.png")
@@ -148,7 +148,7 @@ problem05 = GamblersProblem(100, 0.5)
 value05, policy05, value_history05, policy_history05 = iterate(problem05)
 
 # Value function iterations
-p05value = plot(title="Value Function Iterations for p = 0.5", xlabel="Capital", ylabel="Value", legend=:outertopright)
+p05value = plot(title="Value Function Iterations for p = 0.5", xlabel="Capital", ylabel="Value", legend=:outertopright, background=:transparent)
 
 max_iter = length(value_history05)
 iterations_to_plot = [1, 2, 3, 10]
@@ -161,7 +161,7 @@ plot!(p05value, problem05.states, value_history05[end], label="Final Iteration $
 savefig(p05value, "cornell_theory_reading_group_RL/chapter04/gamblers_problem_value_p05.png")
 
 # Final policy function
-p05policy = plot(title="Policy Function for p = 0.5", xlabel="Capital", ylabel="Policy", legend=false, size=(800, 500))
+p05policy = plot(title="Policy Function for p = 0.5", xlabel="Capital", ylabel="Policy", legend=false, size=(800, 500), background=:transparent)
 plot!(p05policy, problem05.states, policy05, marker=:circle, markersize=3)
 
 savefig(p05policy, "cornell_theory_reading_group_RL/chapter04/gamblers_problem_policy_p05.png")
@@ -171,7 +171,7 @@ problem075 = GamblersProblem(100, 0.75)
 value075, policy075, value_history075, policy_history075 = iterate(problem075)
 
 # Value function iterations
-p075value = plot(title="Value Function Iterations for p = 0.75", xlabel="Capital", ylabel="Value", legend=:outertopright)
+p075value = plot(title="Value Function Iterations for p = 0.75", xlabel="Capital", ylabel="Value", legend=:outertopright, background=:transparent)
 
 max_iter = length(value_history075)
 iterations_to_plot = [1, 2, 3, 10]
@@ -184,7 +184,7 @@ plot!(p075value, problem075.states, value_history075[end], label="Final Iteratio
 savefig(p075value, "cornell_theory_reading_group_RL/chapter04/gamblers_problem_value_p075.png")
 
 # Final policy function
-p075policy = plot(title="Policy Function for p = 0.75", xlabel="Capital", ylabel="Policy", legend=false, size=(800, 500))
+p075policy = plot(title="Policy Function for p = 0.75", xlabel="Capital", ylabel="Policy", legend=false, size=(800, 500), background=:transparent)
 plot!(p075policy, problem075.states, policy075, marker=:circle, markersize=3)
 
 savefig(p075policy, "cornell_theory_reading_group_RL/chapter04/gamblers_problem_policy_p075.png")
