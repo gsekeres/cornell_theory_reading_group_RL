@@ -96,7 +96,7 @@ end
 
 
 # Uncomment to run examples
-
+#=
 # Book example (p = 0.4)
 problem04 = GamblersProblem(100, 0.4)
 value04, policy04, value_history04, policy_history04 = iterate(problem04)
@@ -188,3 +188,4 @@ p075policy = plot(title="Policy Function for p = 0.75", xlabel="Capital", ylabel
 plot!(p075policy, problem075.states, policy075, marker=:circle, markersize=3)
 
 savefig(p075policy, "cornell_theory_reading_group_RL/chapter04/gamblers_problem_policy_p075.png")
+=#
