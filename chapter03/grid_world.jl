@@ -395,10 +395,10 @@ function plot_grid_world_matrix_style(WORLD_SIZE, REWARD_STATES, REWARD_NEXT_STA
 
     # Draw cell borders (vertical and horizontal lines).
     for x in 0:nx
-        plot!(plt, [x+0.5, x+0.5], [0.5, ny+0.5], color=:black, lw=1)
+        plot!(plt, [x+0.5, x+0.5], [0.5, ny+0.5], color=:black, lw=2)
     end
     for y in 0:ny
-        plot!(plt, [0.5, nx+0.5], [y+0.5, y+0.5], color=:black, lw=1)
+        plot!(plt, [0.5, nx+0.5], [y+0.5, y+0.5], color=:black, lw=2)
     end
 
     # Plot reward states in red, teleport states in blue.
@@ -435,7 +435,7 @@ function plot_grid_world_matrix_style(WORLD_SIZE, REWARD_STATES, REWARD_NEXT_STA
         X = [(1-t)^2 * x1 + 2t*(1-t)*cx + t^2*x2 for t in tvals]
         Y = [(1-t)^2 * y1 + 2t*(1-t)*cy + t^2*y2 for t in tvals]
 
-        plot!(plt, X, Y, color=color, linestyle=:dash, arrow=arrow(:end), lw=2)
+        plot!(plt, X, Y, color=color, linestyle=:dash, arrow=arrow(:end), lw=4)
     end
 
     # Draw dashed, curved arrows from reward states to their teleport destinations.
@@ -451,7 +451,7 @@ function plot_grid_world_matrix_style(WORLD_SIZE, REWARD_STATES, REWARD_NEXT_STA
             p1 = full_path[i]
             p2 = full_path[i+1]
             plot!(plt, [p1[1], p2[1]], [p1[2], p2[2]],
-                  color=:black, arrow=:arrow, lw=2)
+                  color=:black, arrow=:arrow, lw=4)
         end
     end
 
@@ -533,7 +533,7 @@ end
 
 
 # Uncomment to run the test cases
-#=
+
 # ========================================== Test cases ==========================================
 
 # Simple 5x5 grid world with two reward states (from textbook example)
@@ -553,6 +553,9 @@ println("Best average reward: $best_avg")
 # No discounting case:
 V1, policy1 = get_optimal_policy(1.0; WORLD_SIZE, REWARD_STATES, REWARD_VALUES, REWARD_NEXT_STATES)
 
+# Book case
+V09, policy09 = get_optimal_policy(0.9; WORLD_SIZE, REWARD_STATES, REWARD_VALUES, REWARD_NEXT_STATES)
+
 # Discounting case:
 V05, policy05 = get_optimal_policy(0.5; WORLD_SIZE, REWARD_STATES, REWARD_VALUES, REWARD_NEXT_STATES)
 
@@ -561,26 +564,35 @@ Vrandom = get_value_random_policy(0.9; WORLD_SIZE, REWARD_STATES, REWARD_VALUES,
 
 # Plot the results:
 plt_cycle = plot_grid_world_matrix_style(WORLD_SIZE, REWARD_STATES, REWARD_NEXT_STATES, full_path)
+plot!(plt_cycle, background=:transparent)
 savefig(plt_cycle, "cornell_theory_reading_group_RL/chapter03/grid_world_cycle.png")
 
 plt_value = plot_value_function(V1, WORLD_SIZE; write=true)
-plot!(plt_value, title="Value Function (gamma=1)")
+plot!(plt_value, title="Value Function (gamma=1)", background=:transparent)
 savefig(plt_value, "cornell_theory_reading_group_RL/chapter03/grid_world_value_1.png")
 
 plt_policy = plot_policy(policy1, WORLD_SIZE)
-plot!(plt_policy, title="Best Policy (gamma=1)")
+plot!(plt_policy, title="Best Policy (gamma=1)", background=:transparent)
 savefig(plt_policy, "cornell_theory_reading_group_RL/chapter03/grid_world_policy_1.png")
 
+plt_value09 = plot_value_function(V09, WORLD_SIZE; write=true)
+plot!(plt_value09, title="Value Function (gamma=0.9)", background=:transparent)
+savefig(plt_value09, "cornell_theory_reading_group_RL/chapter03/grid_world_value_09.png")
+
+plt_policy09 = plot_policy(policy09, WORLD_SIZE)
+plot!(plt_policy09, title="Best Policy (gamma=0.9)", background=:transparent)
+savefig(plt_policy09, "cornell_theory_reading_group_RL/chapter03/grid_world_policy_09.png")
+
 plt_value05 = plot_value_function(V05, WORLD_SIZE; write=true)
-plot!(plt_value05, title="Value Function (gamma=0.5)")
+plot!(plt_value05, title="Value Function (gamma=0.5)", background=:transparent)
 savefig(plt_value05, "cornell_theory_reading_group_RL/chapter03/grid_world_value_05.png")
 
 plt_policy05 = plot_policy(policy05, WORLD_SIZE)
-plot!(plt_policy05, title="Best Policy (gamma=0.5)")
+plot!(plt_policy05, title="Best Policy (gamma=0.5)", background=:transparent)
 savefig(plt_policy05, "cornell_theory_reading_group_RL/chapter03/grid_world_policy_05.png")
 
 plt_value_random = plot_value_function(Vrandom, WORLD_SIZE; write=true)
-plot!(plt_value_random, title="Value Function (random policy, gamma=0.9)")
+plot!(plt_value_random, title="Value Function (random policy, gamma=0.9)", background=:transparent)
 savefig(plt_value_random, "cornell_theory_reading_group_RL/chapter03/grid_world_value_random.png")
 
 
@@ -602,14 +614,14 @@ REWARD_NEXT_STATES = [[random_states_3[i], random_states_4[i]] for i in 1:10]
 Vlarge, policylarge = get_optimal_policy(0.995; WORLD_SIZE, REWARD_STATES, REWARD_VALUES, REWARD_NEXT_STATES)
 
 plt_cycle_large = plot_grid_world_matrix_style(WORLD_SIZE, REWARD_STATES, REWARD_NEXT_STATES, full_path)
+plot!(plt_cycle_large, background=:transparent)
 savefig(plt_cycle_large, "cornell_theory_reading_group_RL/chapter03/grid_world_cycle_large.png")
 
 plt_value_large = plot_value_function(Vlarge, WORLD_SIZE; write=false, color_type=:thermal)
-plot!(plt_value_large, title="Value Function (gamma=0.995, 100x100 grid)")
+plot!(plt_value_large, title="Value Function (gamma=0.995, 100x100 grid)", background=:transparent)
 savefig(plt_value_large, "cornell_theory_reading_group_RL/chapter03/grid_world_value_large.png")
 
 Vlarge_random = get_value_random_policy(0.995; WORLD_SIZE, REWARD_STATES, REWARD_VALUES, REWARD_NEXT_STATES)
 plt_value_large_random = plot_value_function(Vlarge_random, WORLD_SIZE; write=false, color_type=:thermal)
-plot!(plt_value_large_random, title="Value Function (random policy)")
+plot!(plt_value_large_random, title="Value Function (random policy)", background=:transparent)
 savefig(plt_value_large_random, "cornell_theory_reading_group_RL/chapter03/grid_world_value_large_random.png")
-=#
