@@ -13,10 +13,7 @@ We formulate this as a Markov Decision Process (MDP), where:
 - The time step is one day
 - The reward is profit
 =#
-
-# NOTE LOGIC CURRENTLY BROKEN, FIXING WHEN TIME - Gabe
-
-using Plots, Distributions, Printf
+using Plots, Distributions
 
 """
 Car Rental Problem struct with all configurable parameters
@@ -42,6 +39,9 @@ mutable struct CarRentalProblem
     returns_first_loc::Float64
     returns_second_loc::Float64
 
+    # Poisson upper bound (for stability)
+    poisson_upper_bound::Int
+
     function CarRentalProblem(;
         rental_credit::Float64=10.0,
         move_car_cost::Float64=2.0,
@@ -50,11 +50,13 @@ mutable struct CarRentalProblem
         rental_request_first_loc::Float64=3.0,
         rental_request_second_loc::Float64=4.0,
         returns_first_loc::Float64=3.0,
-        returns_second_loc::Float64=2.0)
+        returns_second_loc::Float64=2.0,
+        poisson_upper_bound::Int=11)
         
         new(rental_credit, move_car_cost, max_cars, gamma, 
             rental_request_first_loc, rental_request_second_loc, 
-            returns_first_loc, returns_second_loc)
+            returns_first_loc, returns_second_loc,
+            poisson_upper_bound)
     end
 end
 
@@ -63,7 +65,7 @@ end
 
 Create a cache for Poisson probabilities to avoid recalculating them
 """
-function create_poisson_cache(problem::CarRentalProblem, poisson_upper_bound::Int=11)
+function create_poisson_cache(problem::CarRentalProblem)
     # Create distributions
     rental_first_dist = Poisson(problem.rental_request_first_loc)
     rental_second_dist = Poisson(problem.rental_request_second_loc)
@@ -71,17 +73,17 @@ function create_poisson_cache(problem::CarRentalProblem, poisson_upper_bound::In
     returns_second_dist = Poisson(problem.returns_second_loc)
     
     # Create caches
-    rental_first_cache = [pdf(rental_first_dist, n) for n in 0:poisson_upper_bound-1]
-    rental_second_cache = [pdf(rental_second_dist, n) for n in 0:poisson_upper_bound-1]
-    returns_first_cache = [pdf(returns_first_dist, n) for n in 0:poisson_upper_bound-1]
-    returns_second_cache = [pdf(returns_second_dist, n) for n in 0:poisson_upper_bound-1]
+    rental_first_cache = [pdf(rental_first_dist, n) for n in 0:problem.poisson_upper_bound-1]
+    rental_second_cache = [pdf(rental_second_dist, n) for n in 0:problem.poisson_upper_bound-1]
+    returns_first_cache = [pdf(returns_first_dist, n) for n in 0:problem.poisson_upper_bound-1]
+    returns_second_cache = [pdf(returns_second_dist, n) for n in 0:problem.poisson_upper_bound-1]
     
     return (
         rental_first_cache=rental_first_cache, 
         rental_second_cache=rental_second_cache,
         returns_first_cache=returns_first_cache, 
         returns_second_cache=returns_second_cache,
-        poisson_upper_bound=poisson_upper_bound
+        poisson_upper_bound=problem.poisson_upper_bound
     )
 end
 
@@ -103,7 +105,7 @@ function expected_return(
     action::Int, 
     state_value::Matrix{Float64},
     poisson_cache::NamedTuple,
-    constant_returned_cars::Bool=true
+    constant_returned_cars::Bool=false
 )
     # Initialize total return
     returns = 0.0
@@ -180,16 +182,14 @@ end
 """
     policy_iteration(problem::CarRentalProblem; 
                     constant_returned_cars::Bool=true, 
-                    verbose::Bool=true,
-                    poisson_upper_bound::Int=11)
+                    verbose::Bool=true)
 
 Policy iteration for the car rental problem
 """
 function policy_iteration(problem::CarRentalProblem; 
-                          constant_returned_cars::Bool=true, 
-                          verbose::Bool=true,
-                          poisson_upper_bound::Int=11)
-    # Initialize state value and policy matrices
+                          constant_returned_cars::Bool=false, 
+                          verbose::Bool=true)
+    # Initialize state value and policy matrices (0 to max_cars)
     value = zeros(problem.max_cars + 1, problem.max_cars + 1)
     policy = zeros(Int, problem.max_cars + 1, problem.max_cars + 1)
     
@@ -197,7 +197,7 @@ function policy_iteration(problem::CarRentalProblem;
     actions = collect(-problem.max_cars:problem.max_cars)
     
     # Create Poisson probability cache
-    poisson_cache = create_poisson_cache(problem, poisson_upper_bound)
+    poisson_cache = create_poisson_cache(problem)
     
     # Store policies for visualization
     policy_history = [copy(policy)]
@@ -287,87 +287,79 @@ function visualize_policy_iteration(problem::CarRentalProblem, policy_history, v
     # Determine grid layout
     n_rows = min(2, n_plots)
     n_cols = ceil(Int, n_plots / n_rows)
+
+    # Get global min and max for colorbar
+    all_policies = vcat([vec(policy) for policy in policy_history]...)
+    policy_min, policy_max = minimum(all_policies), maximum(all_policies)
     
-    plt = plot(layout=(n_rows, n_cols), size=(300*n_cols, 250*n_rows), legend=false)
+    plt = plot(layout=(n_rows, n_cols), size=(300*n_cols, 300*n_rows), legend=false, background=:transparent)
     
     # Plot policies
     for (i, policy) in enumerate(policy_history)
-        # Flip policy matrix for visualization (to match the Python version)
-        policy_display = reverse(policy, dims=1)
-        
         # Create heatmap
-        heatmap!(plt[i], policy_display, 
+        heatmap!(plt[i], 0:problem.max_cars, 0:problem.max_cars, policy, 
                  title="Policy $(i-1)",
                  xlabel="# cars at second location", 
                  ylabel="# cars at first location",
                  color=:YlGnBu,
                  colorbar=true,
+                 clim=(policy_min, policy_max),
+                 aspect_ratio=:equal,
                  xticks=0:5:problem.max_cars,
                  yticks=0:5:problem.max_cars,
-                 yflip=false)
+                 yflip=false,
+                 titlefontsize=12,
+                 xlabelfontsize=8,
+                 ylabelfontsize=8,
+                 xguidefontsize=8,
+                 yguidefontsize=8)
     end
     
     # Plot optimal value function
-    value_display = reverse(value, dims=1)
-    heatmap!(plt[n_plots], value_display, 
+    heatmap!(plt[n_plots], 0:problem.max_cars, 0:problem.max_cars, value, 
              title="Optimal Value",
              xlabel="# cars at second location", 
              ylabel="# cars at first location",
              color=:YlGnBu,
              colorbar=true,
+             aspect_ratio=:equal,
              xticks=0:5:problem.max_cars,
              yticks=0:5:problem.max_cars,
-             yflip=false)
-    
+             yflip=false,
+             titlefontsize=12,
+             xlabelfontsize=8,
+             ylabelfontsize=8,
+             xguidefontsize=8,
+             yguidefontsize=8)
     return plt
 end
 
-"""
-Run the car rental problem with visualization
-"""
-function run_car_rental_problem(; 
-    problem=CarRentalProblem(), 
-    constant_returned_cars=true, 
-    verbose=true,
-    poisson_upper_bound=11,
-    save_plot=true,
-    filename="figure_4_2.png"
-)
-    value, policy, policy_history = policy_iteration(
-        problem, 
-        constant_returned_cars=constant_returned_cars, 
-        verbose=verbose,
-        poisson_upper_bound=poisson_upper_bound
-    )
-    
-    plt = visualize_policy_iteration(problem, policy_history, value)
-    
-    if save_plot
-        savefig(plt, filename)
-    end
-    
-    return plt, value, policy, policy_history
-end
-
-
-
 
 # Uncomment to run examples
-
+#=
 # Create problem with default parameters (matching the textbook example)
 problem = CarRentalProblem()
     
-# Run policy iteration with visualization
-plt, value, policy, policy_history = run_car_rental_problem(
-    problem=problem, 
-    verbose=true,
-    poisson_upper_bound=11
-)
+# Run policy iteration with visualization (constant returned cars)
+value_const, policy_const, policy_history_const = policy_iteration(problem, verbose=true, constant_returned_cars=true)
     
 # Display some statistics about the optimal policy
 println("\nOptimal policy statistics:")
 println("  Number of iterations until convergence: $(length(policy_history) - 1)")
 println("  Maximum movement of cars in optimal policy: $(maximum(abs.(policy)))")
-    
+
+# Plot the policy iteration
+plt1 = visualize_policy_iteration(problem, policy_history_const, value_const)
+
 # Save the plot
-savefig(plt, "cornell_theory_reading_group_RL/chapter04/car_rental_policy_iteration.png")
+savefig(plt1, "cornell_theory_reading_group_RL/chapter04/car_rental_policy_iteration_const.png")
+
+# Run policy iteration with visualization (stochastic returns)
+value_stoch, policy_stoch, policy_history_stoch = policy_iteration(problem, verbose=true, constant_returned_cars=false)
+
+# Plot the policy iteration
+plt2 = visualize_policy_iteration(problem, policy_history_stoch, value_stoch)
+
+# Save the plot
+savefig(plt2, "cornell_theory_reading_group_RL/chapter04/car_rental_policy_iteration_stoch.png")
+=#
