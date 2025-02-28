@@ -96,7 +96,7 @@ end
 
 
 # Uncomment to run examples
-#=
+
 # Book example (p = 0.4)
 problem04 = GamblersProblem(100, 0.4)
 value04, policy04, value_history04, policy_history04 = iterate(problem04)
@@ -212,4 +212,34 @@ p055policy = plot(title="Policy Function for p = 0.55", xlabel="Capital", ylabel
 plot!(p055policy, problem055.states, policy055, marker=:circle, markersize=3)
 
 savefig(p055policy, "cornell_theory_reading_group_RL/chapter04/gamblers_problem_policy_p055.png")
-=#
+
+# Large discretization, p = 0.4
+problem04large = GamblersProblem(100_000, 0.4)
+value04large, policy04large, value_history04large, policy_history04large = iterate(problem04large)
+
+# Value function iterations
+p04largevalue = plot(title="Value Function Iterations for p = 0.4 (large discretization)", xlabel="Capital", ylabel="Value", legend=:outertopright, background=:transparent)
+
+max_iter = length(value_history04large)
+iterations_to_plot = [1, 2, 3, 10]
+
+for i in iterations_to_plot
+    plot!(p04largevalue, problem04large.states, value_history04large[i], label="Iteration $i")
+end 
+plot!(p04largevalue, problem04large.states, value_history04large[end], label="Final Iteration $max_iter")
+
+savefig(p04largevalue, "cornell_theory_reading_group_RL/chapter04/gamblers_problem_value_p04large.png")
+
+# Final policy function
+p04largepolicy = plot(title="Policy Function for p = 0.4 (large discretization)", xlabel="Capital", ylabel="Policy", legend=false, size=(800, 500), background=:transparent)
+plot!(p04largepolicy, problem04large.states, policy04large, marker=:circle, markersize=3)
+
+savefig(p04largepolicy, "cornell_theory_reading_group_RL/chapter04/gamblers_problem_policy_p04large.png")
+
+
+
+
+
+
+
+
