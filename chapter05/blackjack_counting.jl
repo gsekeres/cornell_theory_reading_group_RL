@@ -17,7 +17,7 @@ We want to model the value of the player's strategy as a function of Y, the numb
 and the number of decks in the game.
 =# 
 
-# NOTE IS BROKEN, WILL FIX WHEN I GET A CHANCE - GABE
+# BROKEN!! I"M FIXING - gabe
 using Random, Statistics, Plots, ProgressMeter
 
 """
@@ -300,18 +300,19 @@ function state_to_features(state::BlackjackState, hand_idx::Int)
     is_soft = is_soft_hand(hand)
     is_pair_hand = is_pair(hand)
     
-    # Card counting features
+    # Improved card counting - Hi-Lo system
     seen_cards = state.cards_seen
     total_cards = length(state.deck) + length(seen_cards)
     
-    # Count high and low cards seen
-    high_cards_seen = count(c -> c.rank >= 10, seen_cards)
-    low_cards_seen = count(c -> c.rank <= 6, seen_cards)
+    # Count high, mid, and low cards seen (Hi-Lo system)
+    high_cards_seen = count(c -> c.rank >= 10 || c.rank == 1, seen_cards)  # 10s, face cards, aces
+    low_cards_seen = count(c -> c.rank >= 2 && c.rank <= 6, seen_cards)    # 2-6
+    # mid_cards_seen = count(c -> c.rank >= 7 && c.rank <= 9, seen_cards)  # 7-9 (neutral)
     
     # Calculate running count and true count
-    running_count = low_cards_seen - high_cards_seen
-    decks_remaining = (length(state.deck) / 52)
-    true_count = decks_remaining > 0 ? running_count / decks_remaining : 0
+    running_count = low_cards_seen - high_cards_seen  # Positive when low cards removed (deck rich in high cards)
+    decks_remaining = max(1.0, length(state.deck) / 52)
+    true_count = running_count / decks_remaining
     
     # Features for betting and playing strategy
     return [
@@ -343,12 +344,7 @@ mutable struct QLearningAgent
     betting_options::Vector{Int}  # Possible bet amounts
 end
 
-"""
-    create_agent(min_bet::Int, max_bet::Int, betting_increments::Int)
-
-Create a new QLearningAgent with initialized Q-values.
-"""
-function create_agent(min_bet::Int, max_bet::Int, betting_increments::Int)
+function create_agent(min_bet::Int, max_bet::Int, betting_increments::Int; use_basic_strategy::Bool=true)
     # Initialize empty Q-value dictionaries
     Q_play = Dict{Tuple, Dict{Symbol, Float64}}()
     Q_bet = Dict{Tuple{Int, Int}, Dict{Int, Float64}}()
@@ -356,16 +352,23 @@ function create_agent(min_bet::Int, max_bet::Int, betting_increments::Int)
     # Define betting options
     betting_options = collect(min_bet:betting_increments:max_bet)
     
-    return QLearningAgent(
+    agent = QLearningAgent(
         Q_play,
         Q_bet,
-        0.1,    # alpha
-        0.9,    # gamma
-        0.1,    # epsilon
+        0.1,    # alpha - learning rate
+        0.9,    # gamma - discount factor
+        0.1,    # epsilon - exploration rate
         min_bet,
         max_bet,
         betting_options
     )
+    
+    # Initialize with basic strategy if requested
+    if use_basic_strategy
+        initialize_basic_strategy(agent)
+    end
+    
+    return agent
 end
 
 """
@@ -398,6 +401,41 @@ function get_bet_state_key(features)
 end
 
 """
+    sample(collection, weights)
+
+Sample an element from a collection according to the given weights.
+This is a simplified version for use in the improved betting strategy.
+"""
+function sample(collection, weights)
+    # Compute cumulative weights
+    cum_weights = cumsum(weights.values)
+    
+    # Generate a random number between 0 and the sum of weights
+    r = rand() * cum_weights[end]
+    
+    # Find the index of the first element whose cumulative weight is >= r
+    for i in 1:length(collection)
+        if cum_weights[i] >= r
+            return collection[i]
+        end
+    end
+    
+    # Fallback
+    return collection[end]
+end
+
+"""
+    Weights
+
+A simple struct to hold weights for sampling.
+"""
+struct Weights
+    values::Vector{Float64}
+    
+    Weights(values) = new(values ./ sum(values))
+end
+
+"""
     choose_bet(agent::QLearningAgent, features)
 
 Choose a bet amount based on the current state.
@@ -405,13 +443,23 @@ Choose a bet amount based on the current state.
 function choose_bet(agent::QLearningAgent, features)
     key = get_bet_state_key(features)
     chips = features[7]
+    true_count = features[6]
     
     # Initialize Q-values if not seen this state before
     if !haskey(agent.Q_bet, key)
         agent.Q_bet[key] = Dict{Int, Float64}()
         for bet in agent.betting_options
             if bet <= chips  # Can't bet more than we have
-                agent.Q_bet[key][bet] = 0.0
+                # Initialize with a basic card counting heuristic
+                if true_count > 2
+                    # Higher true count favors the player - initialize with higher bets
+                    agent.Q_bet[key][bet] = 0.1 * bet
+                elseif true_count < -1
+                    # Negative true count favors the dealer - initialize with lower bets
+                    agent.Q_bet[key][bet] = -0.1 * bet
+                else
+                    agent.Q_bet[key][bet] = 0.0
+                end
             end
         end
     end
@@ -420,18 +468,24 @@ function choose_bet(agent::QLearningAgent, features)
     affordable_bets = filter(bet -> bet <= chips, collect(keys(agent.Q_bet[key])))
     
     if isempty(affordable_bets)
-        return agent.min_bet  # Default to minimum bet if nothing is affordable
+        return min(agent.min_bet, chips)  # Default to minimum bet if nothing is affordable
     end
     
-    # Epsilon-greedy selection
+    # Epsilon-greedy selection with smart initialization based on true count
     if rand() < agent.epsilon
-        return rand(affordable_bets)  # Explore
+        # Smart exploration - more likely to try higher bets with positive true count
+        if true_count > 2 && length(affordable_bets) > 1
+            # More likely to explore higher bets when count is favorable
+            weights = [bet/sum(affordable_bets) for bet in affordable_bets]
+            return sample(affordable_bets, Weights(weights))
+        else
+            return rand(affordable_bets)  # Uniform exploration
+        end
     else
         # Exploit - choose bet with highest Q-value
         return argmax(bet -> agent.Q_bet[key][bet], affordable_bets)
     end
 end
-
 """
     get_valid_actions(features)
 
@@ -461,7 +515,6 @@ function get_valid_actions(features)
     
     return actions
 end
-
 """
     choose_action(agent::QLearningAgent, features)
 
@@ -504,6 +557,7 @@ function choose_action(agent::QLearningAgent, features)
         return best_action
     end
 end
+
 
 """
     update_Q_value!(agent::QLearningAgent, state_key, action, reward, next_state_key, valid_next_actions)
@@ -779,67 +833,124 @@ Returns both plots for further handling.
 function analyze_policy(agent::QLearningAgent)
     # Analyze betting strategy
     println("Analyzing betting strategy...")
-    for true_count in -5:5
-        for chips in [100, 500, 1000]
-            key = (true_count, chips)
-            if haskey(agent.Q_bet, key)
-                best_bet = argmax(bet -> agent.Q_bet[key][bet], keys(agent.Q_bet[key]))
-                println("True count: $true_count, Chips: $chips, Best bet: $best_bet")
-            end
-        end
-    end
     
-    # Analyze playing strategy for hard hands
-    hard_strategy = zeros(Int, 18, 10)  # Player's 4-21 vs Dealer's 2-11 (Ace)
+    # Create a better visualization for hard hands strategy
+    # Create matrices to store average Q-values for different actions
+    hard_hit_values = zeros(Float64, 18, 10)    # Player 4-21 vs Dealer 2-11
+    hard_stand_values = zeros(Float64, 18, 10)
+    hard_double_values = zeros(Float64, 18, 10)
     
+    # Gather Q-values for hard hands (averaging over different true counts)
     for player_value in 4:21
         for dealer_value in 2:11
-            key = (player_value, dealer_value, false, false, 0)  # Hard hand, not pair, neutral count
-            if haskey(agent.Q_play, key)
-                action = argmax(a -> agent.Q_play[key][a], keys(agent.Q_play[key]))
-                # Encode action as integer: 1=hit, 2=stand, 3=double, 4=split
-                action_code = action == :hit ? 1 : action == :stand ? 2 : action == :double ? 3 : 4
-                
-                # Adjust index to fit within array bounds
-                if player_value >= 4 && player_value <= 21
-                    hard_strategy[player_value-3, dealer_value-1] = action_code
+            hit_vals = Float64[]
+            stand_vals = Float64[]
+            double_vals = Float64[]
+            
+            for true_count in -2:2
+                key = (player_value, dealer_value, false, false, true_count)
+                if haskey(agent.Q_play, key)
+                    qvals = agent.Q_play[key]
+                    if haskey(qvals, :hit)
+                        push!(hit_vals, qvals[:hit])
+                    end
+                    if haskey(qvals, :stand)
+                        push!(stand_vals, qvals[:stand])
+                    end
+                    if haskey(qvals, :double)
+                        push!(double_vals, qvals[:double])
+                    end
                 end
+            end
+            
+            # Store average Q-values
+            if !isempty(hit_vals)
+                hard_hit_values[player_value-3, dealer_value-1] = mean(hit_vals)
+            end
+            if !isempty(stand_vals)
+                hard_stand_values[player_value-3, dealer_value-1] = mean(stand_vals)
+            end
+            if !isempty(double_vals)
+                hard_double_values[player_value-3, dealer_value-1] = mean(double_vals)
             end
         end
     end
     
-    # Visualize hard hands strategy
+    # Determine optimal action for each state
+    hard_strategy = zeros(Int, 18, 10)
+    for i in 1:18
+        for j in 1:10
+            hit_q = hard_hit_values[i, j]
+            stand_q = hard_stand_values[i, j]
+            double_q = hard_double_values[i, j]
+            
+            # Encode action as integer: 1=hit, 2=stand, 3=double
+            if i == 18 && j == 10  # Special case for debugging
+                println("Player $(i+3) vs Dealer $(j+1): Hit=$(hit_q), Stand=$(stand_q), Double=$(double_q)")
+            end
+            
+            # Only consider double on first two cards
+            if double_q > hit_q && double_q > stand_q && i+3 <= 11
+                hard_strategy[i, j] = 3  # Double
+            elseif stand_q > hit_q
+                hard_strategy[i, j] = 2  # Stand
+            else
+                hard_strategy[i, j] = 1  # Hit
+            end
+        end
+    end
+    
+    # Create an enhanced Hard Hands Strategy heatmap
     p1 = heatmap(2:11, 4:21, hard_strategy, 
                 title="Hard Hands Strategy", 
                 xlabel="Dealer Upcard", 
                 ylabel="Player Total",
-                color=[:red, :green, :blue, :purple],
-                colorbar_ticks=([1, 2, 3, 4], ["Hit", "Stand", "Double", "Split"]))
+                color=[:red, :green, :blue],
+                colorbar = false,
+                annotations=[(j, i, text(["H", "S", "D"][hard_strategy[i-3, j-1]], 7, :white)) 
+                           for i in 4:21 for j in 2:11])
     
-    # Visualize betting strategy
-    # Create a properly sized matrix for the betting data
+    # Analyze betting strategy with true count
     betting_data = zeros(11, 3)  # True count -5:5 vs Chips [100,500,1000]
     chip_values = [100, 500, 1000]
     true_counts = collect(-5:5)
     
+    # Determine optimal bet size for each true count and chip level
     for (i, true_count) in enumerate(true_counts)
         for (j, chips) in enumerate(chip_values)
             key = (true_count, chips)
             if haskey(agent.Q_bet, key)
                 best_bet = argmax(bet -> agent.Q_bet[key][bet], keys(agent.Q_bet[key]))
                 betting_data[i, j] = best_bet
+                println("True count: $true_count, Chips: $chips, Best bet: $best_bet")
+            else
+                betting_data[i, j] = agent.min_bet
             end
         end
     end
     
-    # Create the betting strategy heatmap with correct dimensions
+    # Create the betting strategy heatmap with annotations
     p2 = heatmap(true_counts, ["100", "500", "1000"], betting_data', 
-                title="Betting Strategy", 
+                title="Betting Strategy by True Count", 
                 xlabel="True Count", 
                 ylabel="Chips",
-                color=:thermal)
+                color=:thermal,
+                annotations=[(i, j, text(Int(round(betting_data[i, j])), 7, :white)) 
+                           for i in 1:11 for j in 1:3])
     
-    return p1, p2
+    # Calculate average bet by true count (across chip levels)
+    avg_bets = [mean(betting_data[i, :]) for i in 1:11]
+    
+    # Create a line plot of average bet vs true count
+    p3 = plot(true_counts, avg_bets, 
+              title="Average Bet vs True Count", 
+              xlabel="True Count", 
+              ylabel="Average Bet",
+              legend=false, 
+              marker=:circle,
+              line=:solid)
+    
+    return p1, p2, p3
 end
 
 # Main function to run the simulation
@@ -857,16 +968,52 @@ Returns:
 - agent: The trained QLearningAgent
 - plots: A dictionary containing all generated plots
 """
-function run_blackjack_simulation(; save_plots=false, plots_dir="plots")
+function run_blackjack_simulation(; save_plots=false, plots_dir="plots", use_basic_strategy=true)
     # Parameters
-    num_episodes = 100000  # Training episodes
-    num_decks = 6
+    num_episodes = 1_000_000  # Training episodes
+    num_decks = 8
     initial_chips = 1000
-    num_players = 3
+    num_players = 6
     
     # Train the agent
-    println("Training agent...")
-    agent, episode_rewards, chip_history = train_agent(num_episodes, num_decks, initial_chips, num_players)
+    println("Training agent with basic strategy initialization: $(use_basic_strategy)")
+    agent = create_agent(5, 100, 5, use_basic_strategy=use_basic_strategy)
+    state = initialize_game(num_decks, initial_chips, num_players)
+    
+    # Track performance
+    episode_rewards = zeros(num_episodes)
+    chip_history = zeros(num_episodes + 1)
+    chip_history[1] = initial_chips
+    
+    # Progress meter
+    p = Progress(num_episodes, dt=1.0, desc="Training agent: ", barglyphs=BarGlyphs("[=> ]"))
+    
+    for episode in 1:num_episodes
+        # Reset if almost out of chips
+        if state.chips < agent.min_bet
+            state.chips = initial_chips
+        end
+        
+        # Shuffle deck if it's getting low
+        if length(state.deck) < 52
+            # Put seen cards back in deck and shuffle
+            append!(state.deck, state.cards_seen)
+            state.cards_seen = Card[]
+            shuffle!(state.deck)
+        end
+        
+        # Play one game
+        reward = play_game!(state, agent, true)
+        episode_rewards[episode] = reward
+        chip_history[episode + 1] = state.chips
+        
+        # Decay exploration rate
+        if episode % 1000 == 0
+            agent.epsilon = max(0.01, agent.epsilon * 0.95)
+        end
+        
+        next!(p)
+    end
     
     # Evaluate the agent
     println("Evaluating agent...")
@@ -875,45 +1022,68 @@ function run_blackjack_simulation(; save_plots=false, plots_dir="plots")
     # Create plots
     plots = Dict()
     
-    # Plot training results
-    plots[:training_rewards] = plot(1:100:num_episodes, moving_average(episode_rewards, 100)[1:100:num_episodes], 
-        title="Training Reward Moving Average", 
+    # Enhanced training reward plot with smoother moving average
+    window_size = 1000
+    ma_rewards = moving_average(episode_rewards, window_size)
+    plot_interval = max(1, num_episodes ÷ 1000)
+    
+    plots[:training_rewards] = plot(1:plot_interval:num_episodes, ma_rewards[1:plot_interval:num_episodes], 
+        title="Training Reward Moving Average (window=$window_size)", 
         xlabel="Episode", 
         ylabel="Average Reward",
-        legend=false)
+        legend=false,
+        linewidth=2)
     
-    plots[:chip_history] = plot(0:num_episodes, chip_history, 
+    # Chip history with clearer visualization
+    plots[:chip_history] = plot(0:plot_interval:num_episodes, chip_history[1:plot_interval:(num_episodes+1)], 
         title="Chip History During Training", 
         xlabel="Episode", 
         ylabel="Chips",
-        legend=false)
+        legend=false,
+        linewidth=2,
+        ylims=(0, max(2000, maximum(chip_history))))
     
+    # Cumulative reward during evaluation
     plots[:cumulative_rewards] = plot(1:1000, cumsum(eval_rewards), 
         title="Cumulative Reward During Evaluation", 
         xlabel="Game", 
         ylabel="Cumulative Reward",
-        legend=false)
+        legend=false,
+        linewidth=2)
     
-    # Combined training plots
+    # Add win rate per 100 games
+    win_rates = [count(eval_rewards[i:min(i+99, length(eval_rewards))] .> 0) / 
+                min(100, length(eval_rewards) - i + 1) for i in 1:100:length(eval_rewards)]
+    plots[:win_rates] = plot(1:100:1000, win_rates, 
+        title="Win Rate During Evaluation (per 100 games)", 
+        xlabel="Game", 
+        ylabel="Win Rate",
+        legend=false,
+        linewidth=2,
+        marker=:circle)
+    
+    # Combined training plots in a 2x2 layout
     plots[:training_combined] = plot(
         plots[:training_rewards], 
         plots[:chip_history], 
         plots[:cumulative_rewards], 
-        layout=(3,1), 
-        size=(800,600)
+        plots[:win_rates],
+        layout=(2,2), 
+        size=(1000,800)
     )
     
     # Analyze policy
-    hard_strategy_plot, betting_strategy_plot = analyze_policy(agent)
+    hard_strategy_plot, betting_strategy_plot, avg_bet_plot = analyze_policy(agent)
     plots[:hard_strategy] = hard_strategy_plot
     plots[:betting_strategy] = betting_strategy_plot
+    plots[:avg_bet_plot] = avg_bet_plot
     
-    # Combined policy plots
+    # Combined policy plots in a better layout
     plots[:policy_combined] = plot(
         hard_strategy_plot, 
-        betting_strategy_plot, 
+        plot(betting_strategy_plot, avg_bet_plot, layout=(2,1)),
         layout=(1,2), 
-        size=(900,400)
+        size=(1000,600)
     )
     
     # Display plots
@@ -921,9 +1091,11 @@ function run_blackjack_simulation(; save_plots=false, plots_dir="plots")
     display(plots[:policy_combined])
     
     # Print final statistics
-    println("Average reward per game during evaluation: ", mean(eval_rewards))
-    println("Profit after 1000 evaluation games: ", sum(eval_rewards))
-    println("Win rate: ", count(r -> r > 0, eval_rewards) / 1000)
+    println("\nFinal Statistics:")
+    println("Average reward per game during evaluation: ", round(mean(eval_rewards), digits=2))
+    println("Total profit after 1000 evaluation games: ", round(sum(eval_rewards), digits=2))
+    println("Win rate: ", round(count(r -> r > 0, eval_rewards) / 1000 * 100, digits=2), "%")
+    println("Win/Loss/Push: $(count(r -> r > 0, eval_rewards))/$(count(r -> r < 0, eval_rewards))/$(count(r -> r == 0, eval_rewards))")
     
     # Save plots if requested
     if save_plots
@@ -956,32 +1128,25 @@ function moving_average(A, n)
 end
 
 """
-    simulate_different_parameters(; save_plots=false, plots_dir="plots")
+    simulate_different_parameters(; save_plots=false, plots_dir="plots", 
+                                  deck_counts=[1, 2, 6, 8], 
+                                  player_counts=[0, 1, 3, 6])
 
 Run simulations with different parameters and compare results.
-Returns the results dictionary and generated plots.
-
-Parameters:
-- save_plots: Boolean indicating whether to save plots to disk
-- plots_dir: Directory where plots should be saved (will be created if it doesn't exist)
-
-Returns:
-- results: Dictionary containing simulation results for different parameters
-- plots: Dictionary containing generated plots
+This version ensures consistent matrix dimensions for visualization.
 """
-function simulate_different_parameters(; save_plots=false, plots_dir="plots")
-    # Parameters to vary
-    deck_counts = [1, 2, 6, 8]
-    player_counts = [0, 1, 3, 6]
-    
+function simulate_different_parameters(; save_plots=false, plots_dir="plots", 
+                                        deck_counts=[1, 2, 6, 8], 
+                                        player_counts=[0, 1, 3, 6])
     # Results storage
     results = Dict()
     plots = Dict()
     
-    # Track win rates for heatmap
+    # Track win rates and profits for heatmaps
     win_rates = zeros(length(deck_counts), length(player_counts))
     profits = zeros(length(deck_counts), length(player_counts))
     
+    # Run simulations for each combination
     for (d_idx, decks) in enumerate(deck_counts)
         for (p_idx, players) in enumerate(player_counts)
             key = (decks, players)
@@ -1024,22 +1189,23 @@ function simulate_different_parameters(; save_plots=false, plots_dir="plots")
         end
     end
     
-    # Plot comparison
-    deck_labels = ["1 Deck", "2 Decks", "6 Decks", "8 Decks"]
-    player_labels = ["0", "1", "3", "6"]
+    # Create string labels for plotting
+    deck_labels = ["$d Deck" * (d > 1 ? "s" : "") for d in deck_counts]
+    player_labels = ["$p" for p in player_counts]
     
-    # Win rate heatmap
+    # Win rate heatmap with consistent dimensions
     plots[:win_rates] = heatmap(
         deck_labels, player_labels, win_rates',
         title="Win Rate by Deck Count and Number of Players",
         xlabel="Number of Decks",
         ylabel="Number of Other Players",
         color=:thermal,
+        clim=(0.3, 0.5),  # Set consistent color limits
         annotations=[(i, j, text(round(win_rates[i,j], digits=2), 8, :white)) 
                    for i in 1:length(deck_counts), j in 1:length(player_counts)]
     )
     
-    # Profit heatmap
+    # Profit heatmap with consistent dimensions
     plots[:profits] = heatmap(
         deck_labels, player_labels, profits',
         title="Total Profit by Deck Count and Number of Players",
@@ -1076,9 +1242,401 @@ function simulate_different_parameters(; save_plots=false, plots_dir="plots")
     
     return results, plots
 end
+"""
+    initialize_basic_strategy(agent::QLearningAgent)
+
+Initialize the agent with a basic blackjack strategy.
+
+Parameters:
+- agent: The QLearningAgent to initialize
+
+Returns:
+- agent: The initialized QLearningAgent
+"""
+function initialize_basic_strategy(agent::QLearningAgent)
+    println("Initializing agent with basic blackjack strategy...")
+    
+    # Hard totals (non-soft, non-pair hands)
+    for player_value in 4:21
+        for dealer_value in 2:11
+            for true_count in -5:5
+                key = (player_value, dealer_value, false, false, true_count)
+                agent.Q_play[key] = Dict{Symbol, Float64}()
+                
+                # Basic strategy for hard hands
+                if player_value >= 17
+                    # Always stand on hard 17 or higher
+                    agent.Q_play[key][:stand] = 1.0
+                    agent.Q_play[key][:hit] = 0.0
+                    agent.Q_play[key][:double] = -1.0
+                    agent.Q_play[key][:split] = -1.0
+                elseif player_value >= 13 && dealer_value <= 6
+                    # Stand on 13-16 vs dealer 2-6
+                    agent.Q_play[key][:stand] = 1.0
+                    agent.Q_play[key][:hit] = 0.0
+                    agent.Q_play[key][:double] = -1.0
+                    agent.Q_play[key][:split] = -1.0
+                elseif player_value >= 12 && dealer_value <= 3
+                    # Stand on 12 vs dealer 2-3
+                    agent.Q_play[key][:stand] = 0.5
+                    agent.Q_play[key][:hit] = 0.0
+                    agent.Q_play[key][:double] = -1.0
+                    agent.Q_play[key][:split] = -1.0
+                elseif player_value == 11
+                    # Double on 11 vs any dealer
+                    agent.Q_play[key][:double] = 1.0
+                    agent.Q_play[key][:hit] = 0.5
+                    agent.Q_play[key][:stand] = -0.5
+                    agent.Q_play[key][:split] = -1.0
+                elseif player_value == 10 && dealer_value <= 9
+                    # Double on 10 vs dealer 2-9
+                    agent.Q_play[key][:double] = 1.0
+                    agent.Q_play[key][:hit] = 0.5
+                    agent.Q_play[key][:stand] = -0.5
+                    agent.Q_play[key][:split] = -1.0
+                elseif player_value == 9 && dealer_value >= 3 && dealer_value <= 6
+                    # Double on 9 vs dealer 3-6
+                    agent.Q_play[key][:double] = 0.5
+                    agent.Q_play[key][:hit] = 0.0
+                    agent.Q_play[key][:stand] = -0.5
+                    agent.Q_play[key][:split] = -1.0
+                else
+                    # Otherwise hit
+                    agent.Q_play[key][:hit] = 0.5
+                    agent.Q_play[key][:stand] = -0.5
+                    agent.Q_play[key][:double] = -1.0
+                    agent.Q_play[key][:split] = -1.0
+                end
+            end
+        end
+    end
+    
+    # Soft hands (includes an Ace counted as 11)
+    for player_value in 12:21
+        for dealer_value in 2:11
+            for true_count in -5:5
+                key = (player_value, dealer_value, true, false, true_count)
+                agent.Q_play[key] = Dict{Symbol, Float64}()
+                
+                # Basic strategy for soft hands
+                if player_value >= 19
+                    # Always stand on soft 19+
+                    agent.Q_play[key][:stand] = 1.0
+                    agent.Q_play[key][:hit] = -0.5
+                    agent.Q_play[key][:double] = -1.0
+                    agent.Q_play[key][:split] = -1.0
+                elseif player_value == 18 && dealer_value >= 2 && dealer_value <= 8
+                    # Stand on soft 18 vs dealer 2-8
+                    agent.Q_play[key][:stand] = 0.5
+                    agent.Q_play[key][:hit] = -0.2
+                    agent.Q_play[key][:double] = -0.5
+                    agent.Q_play[key][:split] = -1.0
+                elseif player_value == 18
+                    # Hit on soft 18 vs dealer 9-A
+                    agent.Q_play[key][:hit] = 0.5
+                    agent.Q_play[key][:stand] = 0.0
+                    agent.Q_play[key][:double] = -0.5
+                    agent.Q_play[key][:split] = -1.0
+                elseif player_value == 17 && dealer_value >= 3 && dealer_value <= 6
+                    # Double on soft 17 vs dealer 3-6, otherwise hit
+                    agent.Q_play[key][:double] = 0.5
+                    agent.Q_play[key][:hit] = 0.3
+                    agent.Q_play[key][:stand] = -0.5
+                    agent.Q_play[key][:split] = -1.0
+                elseif player_value >= 15 && dealer_value >= 4 && dealer_value <= 6
+                    # Double on soft 15-16 vs dealer 4-6, otherwise hit
+                    agent.Q_play[key][:double] = 0.5
+                    agent.Q_play[key][:hit] = 0.3
+                    agent.Q_play[key][:stand] = -0.5
+                    agent.Q_play[key][:split] = -1.0
+                elseif player_value >= 13 && dealer_value >= 5 && dealer_value <= 6
+                    # Double on soft 13-14 vs dealer 5-6, otherwise hit
+                    agent.Q_play[key][:double] = 0.5
+                    agent.Q_play[key][:hit] = 0.3
+                    agent.Q_play[key][:stand] = -0.5
+                    agent.Q_play[key][:split] = -1.0
+                else
+                    # Otherwise hit
+                    agent.Q_play[key][:hit] = 0.5
+                    agent.Q_play[key][:stand] = -0.5
+                    agent.Q_play[key][:double] = -0.3
+                    agent.Q_play[key][:split] = -1.0
+                end
+            end
+        end
+    end
+    
+    # Pairs
+    for card_value in 1:10
+        player_value = card_value == 1 ? 12 : card_value * 2  # Ace pair is 12, others are double
+        for dealer_value in 2:11
+            for true_count in -5:5
+                key = (player_value, dealer_value, card_value == 1, true, true_count)
+                agent.Q_play[key] = Dict{Symbol, Float64}()
+                
+                # Basic strategy for pairs
+                if card_value == 1 || card_value == 8
+                    # Always split As and 8s
+                    agent.Q_play[key][:split] = 1.0
+                    agent.Q_play[key][:hit] = -0.5
+                    agent.Q_play[key][:stand] = -1.0
+                    agent.Q_play[key][:double] = -1.0
+                elseif card_value == 10
+                    # Never split 10s
+                    agent.Q_play[key][:stand] = 1.0
+                    agent.Q_play[key][:hit] = -0.5
+                    agent.Q_play[key][:double] = -0.5
+                    agent.Q_play[key][:split] = -1.0
+                elseif card_value == 9 && dealer_value != 7 && dealer_value != 10 && dealer_value != 11
+                    # Split 9s except vs 7, 10, A
+                    agent.Q_play[key][:split] = 0.5
+                    agent.Q_play[key][:stand] = 0.0
+                    agent.Q_play[key][:hit] = -0.5
+                    agent.Q_play[key][:double] = -1.0
+                elseif card_value == 7 && dealer_value <= 7
+                    # Split 7s vs 2-7
+                    agent.Q_play[key][:split] = 0.5
+                    agent.Q_play[key][:hit] = 0.0
+                    agent.Q_play[key][:stand] = -0.5
+                    agent.Q_play[key][:double] = -1.0
+                elseif card_value == 6 && dealer_value <= 6
+                    # Split 6s vs 2-6
+                    agent.Q_play[key][:split] = 0.5
+                    agent.Q_play[key][:hit] = 0.0
+                    agent.Q_play[key][:stand] = -0.5
+                    agent.Q_play[key][:double] = -1.0
+                elseif card_value == 4 && (dealer_value == 5 || dealer_value == 6)
+                    # Split 4s vs 5-6
+                    agent.Q_play[key][:split] = 0.3
+                    agent.Q_play[key][:hit] = 0.0
+                    agent.Q_play[key][:stand] = -0.5
+                    agent.Q_play[key][:double] = -1.0
+                elseif card_value == 3 && dealer_value <= 7
+                    # Split 3s vs 2-7
+                    agent.Q_play[key][:split] = 0.3
+                    agent.Q_play[key][:hit] = 0.0
+                    agent.Q_play[key][:stand] = -0.5
+                    agent.Q_play[key][:double] = -1.0
+                elseif card_value == 2 && dealer_value <= 7
+                    # Split 2s vs 2-7
+                    agent.Q_play[key][:split] = 0.3
+                    agent.Q_play[key][:hit] = 0.0
+                    agent.Q_play[key][:stand] = -0.5
+                    agent.Q_play[key][:double] = -1.0
+                else
+                    # Otherwise follow normal hard total strategy
+                    if player_value >= 17
+                        agent.Q_play[key][:stand] = 0.5
+                        agent.Q_play[key][:hit] = -0.3
+                        agent.Q_play[key][:split] = -0.5
+                        agent.Q_play[key][:double] = -1.0
+                    else
+                        agent.Q_play[key][:hit] = 0.5
+                        agent.Q_play[key][:stand] = -0.3
+                        agent.Q_play[key][:split] = -0.5
+                        agent.Q_play[key][:double] = -1.0
+                    end
+                end
+            end
+        end
+    end
+    
+    # Initialize betting strategy based on true count
+    for true_count in -5:5
+        for chips in [100, 500, 1000]
+            key = (true_count, chips)
+            agent.Q_bet[key] = Dict{Int, Float64}()
+            
+            for bet in agent.betting_options
+                if bet <= chips
+                    # Card counting betting strategy
+                    if true_count >= 3
+                        # Highly favorable - bet more
+                        value = 0.1 * (bet / agent.min_bet)
+                    elseif true_count >= 1
+                        # Slightly favorable - bet moderately
+                        value = 0.05 * (bet / agent.min_bet)
+                    elseif true_count <= -2
+                        # Unfavorable - bet minimum
+                        value = -0.1 * (bet / agent.min_bet)
+                    else
+                        # Neutral - bet conservatively
+                        value = 0.0
+                    end
+                    agent.Q_bet[key][bet] = value
+                end
+            end
+        end
+    end
+    
+    println("Basic strategy initialization complete")
+end
+
+"""
+    analyze_parameter_results(results, deck_counts, player_counts)
+
+Analyze and summarize the results of parameter simulation.
+"""
+function analyze_parameter_results(results, deck_counts, player_counts)
+    # Initialize summary
+    summary = Dict()
+    
+    # Find best win rate and profit configurations
+    best_win_rate = 0.0
+    best_win_rate_config = nothing
+    
+    best_profit = -Inf
+    best_profit_config = nothing
+    
+    worst_profit = Inf
+    worst_profit_config = nothing
+    
+    # Analyze by deck count
+    deck_win_rates = Dict()
+    deck_profits = Dict()
+    
+    for decks in deck_counts
+        win_rates = [results[(decks, players)].win_rate for players in player_counts]
+        profits = [results[(decks, players)].total_profit for players in player_counts]
+        
+        deck_win_rates[decks] = mean(win_rates)
+        deck_profits[decks] = mean(profits)
+        
+        for players in player_counts
+            result = results[(decks, players)]
+            
+            if result.win_rate > best_win_rate
+                best_win_rate = result.win_rate
+                best_win_rate_config = (decks, players)
+            end
+            
+            if result.total_profit > best_profit
+                best_profit = result.total_profit
+                best_profit_config = (decks, players)
+            end
+            
+            if result.total_profit < worst_profit
+                worst_profit = result.total_profit
+                worst_profit_config = (decks, players)
+            end
+        end
+    end
+    
+    # Analyze by player count
+    player_win_rates = Dict()
+    player_profits = Dict()
+    
+    for players in player_counts
+        win_rates = [results[(decks, players)].win_rate for decks in deck_counts]
+        profits = [results[(decks, players)].total_profit for decks in deck_counts]
+        
+        player_win_rates[players] = mean(win_rates)
+        player_profits[players] = mean(profits)
+    end
+    
+    # Overall statistics
+    all_win_rates = [results[key].win_rate for key in keys(results)]
+    all_profits = [results[key].total_profit for key in keys(results)]
+    
+    summary[:best_win_rate] = (config = best_win_rate_config, value = best_win_rate)
+    summary[:best_profit] = (config = best_profit_config, value = best_profit)
+    summary[:worst_profit] = (config = worst_profit_config, value = worst_profit)
+    summary[:average_win_rate] = mean(all_win_rates)
+    summary[:average_profit] = mean(all_profits)
+    summary[:deck_win_rates] = deck_win_rates
+    summary[:deck_profits] = deck_profits
+    summary[:player_win_rates] = player_win_rates
+    summary[:player_profits] = player_profits
+    
+    return summary
+end
+
+"""
+    print_parameter_summary(summary)
+
+Print a readable summary of parameter analysis results.
+"""
+function print_parameter_summary(summary)
+    println("\n=== BLACKJACK PARAMETER ANALYSIS SUMMARY ===")
+    
+    println("\nBest Configurations:")
+    
+    best_wr_decks, best_wr_players = summary[:best_win_rate].config
+    println("  Highest Win Rate: $(round(summary[:best_win_rate].value * 100, digits=1))% with $best_wr_decks deck(s) and $best_wr_players player(s)")
+    
+    best_profit_decks, best_profit_players = summary[:best_profit].config
+    println("  Highest Profit: $(Int(round(summary[:best_profit].value))) with $best_profit_decks deck(s) and $best_profit_players player(s)")
+    
+    worst_profit_decks, worst_profit_players = summary[:worst_profit].config
+    println("  Lowest Profit: $(Int(round(summary[:worst_profit].value))) with $worst_profit_decks deck(s) and $worst_profit_players player(s)")
+    
+    println("\nWin Rate by Deck Count:")
+    for (decks, win_rate) in sort(collect(summary[:deck_win_rates]))
+        println("  $decks deck(s): $(round(win_rate * 100, digits=1))%")
+    end
+    
+    println("\nProfit by Deck Count:")
+    for (decks, profit) in sort(collect(summary[:deck_profits]))
+        println("  $decks deck(s): $(Int(round(profit)))")
+    end
+    
+    println("\nWin Rate by Player Count:")
+    for (players, win_rate) in sort(collect(summary[:player_win_rates]))
+        println("  $players player(s): $(round(win_rate * 100, digits=1))%")
+    end
+    
+    println("\nProfit by Player Count:")
+    for (players, profit) in sort(collect(summary[:player_profits]))
+        println("  $players player(s): $(Int(round(profit)))")
+    end
+    
+    println("\nOverall Statistics:")
+    println("  Average Win Rate: $(round(summary[:average_win_rate] * 100, digits=1))%")
+    println("  Average Profit: $(Int(round(summary[:average_profit])))")
+    
+    println("\nRecommendation:")
+    if summary[:best_win_rate].config == summary[:best_profit].config
+        println("  Best overall configuration: $(summary[:best_profit].config[1]) deck(s) with $(summary[:best_profit].config[2]) player(s)")
+    else
+        println("  For highest win rate: $(summary[:best_win_rate].config[1]) deck(s) with $(summary[:best_win_rate].config[2]) player(s)")
+        println("  For highest profit: $(summary[:best_profit].config[1]) deck(s) with $(summary[:best_profit].config[2]) player(s)")
+    end
+end
+
+"""
+    run_focused_parameter_analysis(; save_plots=true)
+
+Run a focused parameter simulation with analysis and visualization.
+"""
+function run_focused_parameter_analysis(; save_plots=true, plots_dir="plots")
+    # Use a focused set of parameters
+    deck_counts = [1, 2, 4, 6, 8]
+    player_counts = [0, 1, 3, 6]
+    
+    # Run simulation
+    println("Running parameter simulation...")
+    results, plots = simulate_different_parameters(
+        save_plots=save_plots,
+        plots_dir=plots_dir,
+        deck_counts=deck_counts,
+        player_counts=player_counts
+    )
+    
+    # Analyze results
+    println("Analyzing results...")
+    summary = analyze_parameter_results(results, deck_counts, player_counts)
+    
+    # Print summary
+    print_parameter_summary(summary)
+    
+    return results, plots, summary
+end
+
 
 # Uncomment the following lines to run the simulation
-#=
+
+# Run standard simulation
 agent, plots1 = run_blackjack_simulation(save_plots=true, plots_dir="cornell_theory_reading_group_RL/chapter05/")
-results, plots2 = simulate_different_parameters(save_plots=true, plots_dir="cornell_theory_reading_group_RL/chapter05/")
-=# 
+
+# Run focused parameter analysis for clearer visualization and insights
+results, plots2, summary = run_focused_parameter_analysis(save_plots=true, plots_dir="cornell_theory_reading_group_RL/chapter05/")
