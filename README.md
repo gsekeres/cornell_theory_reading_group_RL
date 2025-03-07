@@ -8,6 +8,9 @@ When contributing -- please add your name to the list of contributors and the MI
 Contributors: 
  - [Gabriel (Gabe) Sekeres](https://gabesekeres.com/)
  - [Fenglin (Finn) Ye](http://finnyeee.site)
+ - [Ruqing Xu](https://ruqing-xu.github.io/)
+ - Yurou He
+
 
 # Contents
 
@@ -29,4 +32,4 @@ Python code for dynamic programming examples (car rental and gambler's problem),
 
 ### Chapter 5
 
-Python code for Monte Carlo examples (blackjack and first-visit Monte Carlo policy evaluation), with slides explaining the code and environment. Python code from [Shangtong Zhang](https://github.com/ShangtongZhang/reinforcement-learning-an-introduction), slides written by Ruqing. Julia code replicating the Python code written by [Gabe](https://gabesekeres.com/).
+Python code for Monte Carlo examples (blackjack), with slides explaining the code and environment. Python code from [Shangtong Zhang](https://github.com/ShangtongZhang/reinforcement-learning-an-introduction), slides written by [Ruqing](https://ruqing-xu.github.io/) and Yurou. Julia code extending the Python code written by [Gabe](https://gabesekeres.com/).
