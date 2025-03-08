@@ -9,7 +9,7 @@ Contributors:
  - [Gabriel (Gabe) Sekeres](https://gabesekeres.com/)
  - [Fenglin (Finn) Ye](http://finnyeee.site)
  - [Ruqing Xu](https://ruqing-xu.github.io/)
- - [Yurou He](https://sites.google.com/cornell.edu/yurouhe)
+ - [Yurou He](https://sites.google.com/view/yurouhe)
 
 
 # Contents
