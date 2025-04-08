@@ -1,0 +1,9 @@
+                       1-Symmetric 1-Asymmetric      1      2     3+     All Full Eq. on Path
+Frequency                   27.700       36.600 64.300 23.800 11.900 100.000           50.500
+Avg. Profit Gain             0.866        0.855  0.860  0.846  0.793   0.849            0.854
+S.D. Profit Gain             0.115        0.114  0.114  0.104  0.097   0.112            0.108
+% Equilibrium on Path        0.686        0.661  0.672  0.294  0.025   0.505            1.000
+Avg. Q Loss On Path          0.001        0.001  0.001  0.002  0.004   0.002            0.000
+S.D. Q Loss On Path          0.002        0.004  0.003  0.003  0.006   0.004            0.000
+Avg. Q Loss All States       0.018        0.018  0.018  0.018  0.018   0.018            0.018
+S.D. Q Loss All States       0.006        0.007  0.006  0.006  0.006   0.006            0.006

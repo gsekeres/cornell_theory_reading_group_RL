@@ -1,0 +1,25 @@
+Number of experiments:																																																	
+2	2																																																
+Number of cores																																																	
+25																																																	
+Number of sessions																																																	
+1000																																																	
+Iterations per episode																																																	
+25000																																																	
+Maximum number of episode																																																	
+50000																																																	
+Performance measurement period length: 																																																	
+4																																																	
+Number of Agents:																																																	
+3																																																	
+Number of Prices:																																																	
+16																																																	
+Type of Exploration Mechanism (1 = exponentially decreasing epsilon (beta); 2 = Boltzmann)																								
+1																								
+Type of Payoff Input (1 = Singh & Vives demand; 2 = Logit demand; 3 = Logit demand with zero sigma (perfect competition))																								
+2																								
+Compute Detailed Analysis (0 = No; 1 = Yes)																											
+1																											
+Experiment	PrintQ	Alpha1	Alpha2	Alpha3	Beta_1	Beta_2	Beta_3	Delta	a0	a1	a2	a3	c1	c2	c3	mu	extend1	extend2	EntryProb	ExitProb	NashP1In	NashP2In	NashP3In	NashP1Out	NashP2Out	NashP3Out	CoopP1In	CoopP2In	CoopP3In	CoopP1Out	CoopP2Out	CoopP3Out	typeQ1	par1Q1	par2Q1	par3Q1	typeQ2	par1Q2	par2Q2	par3Q2	typeQ3	par1Q3	par2Q3	par3Q3
+1	0	0.15	0.15	0.15	0.1	0.1	0.1	0.95	0	2	2	2	1	1	1	0.25	0.1	0.1	0.001	0.001	1.37016	1.37016	1.37016	1.47293	1.47293	1000	2	2	2	1.92498	1.92498	1000	O	0	0	0	O	0	0	0	O	0	0	0
+2	0	0.15	0.15	0.15	0.1	0.1	0.1	0.95	0	2	2	2	1	1	1	0.25	0.1	0.1	0.0001	0.0001	1.37016	1.37016	1.37016	1.47293	1.47293	1000	2	2	2	1.92498	1.92498	1000	O	0	0	0	O	0	0	0	O	0	0	0

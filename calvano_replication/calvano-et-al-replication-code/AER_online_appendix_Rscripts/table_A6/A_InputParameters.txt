@@ -1,0 +1,31 @@
+Number of experiments:																																						
+6	6																																					
+Number of cores																																						
+25																																						
+Number of sessions																																						
+1000																																						
+Iterations per episode																																						
+25000																																						
+Maximum number of episode																																						
+50000																																						
+Performance measurement period length: 																																						
+4																																						
+Number of Agents:																																						
+2																																						
+Number of Prices:																																						
+15																																						
+Number of markets (used for stochastic a0):																																						
+3																																						
+Type of Exploration Mechanism (1 = exponentially decreasing epsilon (beta); 2 = Boltzmann)																								
+1																								
+Type of Payoff Input (1 = Singh & Vives demand; 2 = Logit demand; 3 = Logit demand with zero sigma (perfect competition))																								
+2																								
+Compute Detailed Analysis (0 = No; 1 = Yes)																											
+1																											
+Model	PrintQ	Alpha1	Alpha2	Beta_1	Beta_2	Delta	a0_1	a0_2	a0_3	a1	a2	c1	c2	mu	extend1	extend2	ac(a_0)	NashP1_1	NashP1_2	NashP1_3	NashP2_1	NashP2_2	NashP2_3	CoopP1_1	CoopP1_2	CoopP1_3	CoopP2_1	CoopP2_2	CoopP2_3	typeQ1	par1Q1	par2Q1	typeQ2	par1Q2	par2Q2
+1	0	0.15	0.15	0.1	0.1	0.95	0	0	0	2	2	1	1	0.25	0.1	0.1	0	1.47293	1.47293	1.47293	1.47293	1.47293	1.47293	1.92498	1.92498	1.92498	1.92498	1.92498	1.92498	O	0	0	O	0	0
+2	0	0.15	0.15	0.1	0.1	0.95	-0.05	0	0.05	2	2	1	1	0.25	0.1	0.1	0	1.47705	1.47293	1.46823	1.47705	1.47293	1.46823	1.96173	1.92498	1.88877	1.96173	1.92498	1.88877	O	0	0	O	0	0
+3	0	0.15	0.15	0.1	0.1	0.95	-0.1	0	0.1	2	2	1	1	0.25	0.1	0.1	0	1.48064	1.47293	1.46293	1.48064	1.47293	1.46293	1.99898	1.92498	1.85312	1.99898	1.92498	1.85312	O	0	0	O	0	0
+4	0	0.15	0.15	0.1	0.1	0.95	-0.15	0	0.15	2	2	1	1	0.25	0.1	0.1	0	1.48373	1.47293	1.45701	1.48373	1.47293	1.45701	2.03669	1.92498	1.81808	2.03669	1.92498	1.81808	O	0	0	O	0	0
+5	0	0.15	0.15	0.1	0.1	0.95	-0.2	0	0.2	2	2	1	1	0.25	0.1	0.1	0	1.48639	1.47293	1.45047	1.48639	1.47293	1.45047	2.07485	1.92498	1.7837	2.07485	1.92498	1.7837	O	0	0	O	0	0
+6	0	0.15	0.15	0.1	0.1	0.95	-0.25	0	0.25	2	2	1	1	0.25	0.1	0.1	0	1.48865	1.47293	1.44331	1.48865	1.47293	1.44331	2.11343	1.92498	1.75	2.11343	1.92498	1.75	O	0	0	O	0	0

@@ -62,7 +62,7 @@ def choose_action(state, q_value):
 def take_action(state, action):
     if state == STATE_A:
         return 0
-    return np.random.normal(-0.1, 1)
+    return np.random.normal(0.1, 1)
 
 # if there are two state action pair value array, use double Q-Learning
 # otherwise use normal Q-Learning
@@ -118,12 +118,12 @@ def figure_6_7():
 
     plt.plot(left_counts_q, label='Q-Learning')
     plt.plot(left_counts_double_q, label='Double Q-Learning')
-    plt.plot(np.ones(episodes) * 0.05, label='Optimal')
+    plt.plot(np.ones(episodes), label='Optimal')
     plt.xlabel('episodes')
     plt.ylabel('% left actions from A')
     plt.legend()
 
-    plt.savefig('../images/figure_6_7.png')
+    plt.savefig('cornell_theory_reading_group_RL/chapter06/figure_6_7.png')
     plt.close()
 
 if __name__ == '__main__':

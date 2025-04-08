@@ -1,0 +1,2 @@
+     alpha   lambda Profit Gain EqOnPath        IR       IC Punishment Length
+[1,]  0.05 0.999961     0.85626    0.094 -0.090199 0.840803          6.554283

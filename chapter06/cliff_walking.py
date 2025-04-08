@@ -16,7 +16,7 @@ from tqdm import tqdm
 WORLD_HEIGHT = 4
 
 # world width
-WORLD_WIDTH = 12
+WORLD_WIDTH = 98
 
 # probability for exploration
 EPSILON = 0.1
@@ -36,7 +36,7 @@ ACTIONS = [ACTION_UP, ACTION_DOWN, ACTION_LEFT, ACTION_RIGHT]
 
 # initial state action pair values
 START = [3, 0]
-GOAL = [3, 11]
+GOAL = [3, 97]
 
 def step(state, action):
     i, j = state
@@ -52,7 +52,7 @@ def step(state, action):
         assert False
 
     reward = -1
-    if (action == ACTION_DOWN and i == 2 and 1 <= j <= 10) or (
+    if (action == ACTION_DOWN and i == 2 and 1 <= j <= 96) or (
         action == ACTION_RIGHT and state == START):
         reward = -100
         next_state = START
@@ -195,7 +195,7 @@ def figure_6_4():
     plt.ylim([-100, 0])
     plt.legend()
 
-    plt.savefig('../images/figure_6_4.png')
+    plt.savefig('cornell_theory_reading_group_RL/chapter06/figure_6_4.png')
     plt.close()
 
     # display optimal policy
@@ -250,7 +250,7 @@ def figure_6_6():
     plt.ylabel('reward per episode')
     plt.legend()
 
-    plt.savefig('../images/figure_6_6.png')
+    plt.savefig('cornell_theory_reading_group_RL/chapter06/figure_6_6.png')
     plt.close()
 
 if __name__ == '__main__':

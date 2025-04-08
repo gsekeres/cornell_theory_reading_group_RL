@@ -1,0 +1,39 @@
+Number of experiments:																																									
+2	2																																								
+Number of cores																																									
+25																																									
+Number of sessions																																									
+1000																																									
+Iterations per episode																																									
+25000																																									
+Maximum number of episode																																									
+50000																																									
+Performance measurement period length: 																																									
+4																																									
+Number of Agents:																																									
+3																																									
+Memory:																																									
+1																																									
+Number of Prices:																																									
+15																																									
+Type of Exploration Mechanism (1 = exponentially decreasing epsilon (beta); 2 = Boltzmann)																								
+1																								
+Type of Payoff Input (1 = Singh & Vives demand; 2 = Logit demand; 3 = Logit demand with zero sigma (perfect competition))																								
+2																								
+Compute Impulse Response analysis with a one-period deviation to static Best Response (0 = No; 1 = Yes)																																									
+1																																									
+Compute Impulse Response analysis with a temporary or permanent deviation to Nash (0 = No; 1000 = Permanent; 999 >= X >= 1 = Duration of temporary shock)																																									
+0																																									
+Compute Impulse Response analysis with a one-period deviation to all prices (0 = No; 1 = Yes)																																									
+0																																									
+Compute Equilibrium Check (0 = No, 1 = Yes)																								
+1																																								
+Compute Q Gap w.r.t. Maximum (0 = NO; 1 = YES)																																									
+1																																									
+Compute Learning Trajectory (X1 = 0 : NO; X1 > 0 : number of checkpoints; X2 > 0 : number of iterations between checkpoints)																																									
+0	0																																								
+Compute Detailed Analysis (0 = No; 1 = Yes)																																									
+1																																									
+Experiment	PrintQ	Alpha1	Alpha2	Alpha3	Beta_1	Beta_2	Beta_3	Delta	a0	a1	a2	a3	c1	c2	c3	mu	extend1	extend2	NashP1	NashP2	NashP3	CoopP1	CoopP2	CoopP3	typeQ1	par1Q1	par2Q1	par3Q1	typeQ2	par1Q2	par2Q2	par3Q2	typeQ3	par1Q3	par2Q3	par3Q3
+1	0	0.15	0.15	0.15	0.1	0.1	0.1	0.95	0	2	2	2	1	1	1	0.25	0.1	0.1	1.37016	1.37016	1.37016	2	2	2	O	0	0	0	O	0	0	0	O	0	0	0
+2	0	0.05	0.05	0.05	0.006	0.006	0.006	0.95	0	2	2	2	1	1	1	0.25	0.1	0.1	1.37016	1.37016	1.37016	2	2	2	O	0	0	0	O	0	0	0	O	0	0	0

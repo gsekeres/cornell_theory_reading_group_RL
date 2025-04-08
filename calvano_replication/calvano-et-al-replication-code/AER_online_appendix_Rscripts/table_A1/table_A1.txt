@@ -1,0 +1,2 @@
+     Avg Profit Gain Avg Equilibrium Play Avg Q gap
+[1,]           0.185                0.273     0.013

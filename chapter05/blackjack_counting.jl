@@ -20,6 +20,57 @@ and the number of decks in the game.
 # BROKEN!! I"M FIXING - gabe
 using Random, Statistics, Plots, ProgressMeter
 
+# need to initialize the game for all players, assuming all other players play dealer strategy for simplicity
+# need to initialize all parts of the strategy for the RL player, including betting, doubling, splitting, etc.
+
+# need to precisely define information partitions to give to the RL player
+
+# tests: 
+# give full sequence of information, make sure they learn to count
+# give no information, make sure bets stay constant 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# old code
 """
     Card
 

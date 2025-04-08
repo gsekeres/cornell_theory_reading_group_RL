@@ -1,0 +1,3 @@
+           Profit Gain EqOnPath     IR    IC Punishment Length
+Benchmark        0.849    0.505 -0.127 0.936             5.705
+Rematching       0.837    0.541 -0.128 0.932             5.674
