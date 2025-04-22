@@ -5,17 +5,17 @@ mu = 0.25
 delta = 0.95
 
 
-def demand(p1,p2,index):
+def demand(p1,p2):
     q = np.exp((2-p1)/mu)/(np.exp((2-p1)/mu)+np.exp((2-p2)/mu)+np.exp(a0/mu))
     return q
 
-def profit(p1,p2,index):
-    profit = (p1-1)*demand(p1,p2,index)
+def profit(p1,p2):
+    profit = (p1-1)*demand(p1,p2)
     return profit
 
 def process(action_0, action_1):
-    profit_0 = profit(action_0, action_1, 0)
-    profit_1 = profit(action_1, action_0, 1)
+    profit_0 = profit(action_0, action_1)
+    profit_1 = profit(action_1, action_0)
     return [profit_0, profit_1]
 
 xi = 0.1
@@ -37,7 +37,7 @@ for l in range(m):
     rewards = 0
     for k in range(m):
         rewards += process(action_space[k], action_space[l])[1]
-    q_value_2[:, :, k, l] = rewards / ((1 - delta)*m)
+    q_value_2[:, :, l, :] = rewards / ((1 - delta)*m)
 
 def q_learning(q_value_1, q_value_2, step_size, beta):
     # Get initial state indices
@@ -64,8 +64,8 @@ def q_learning(q_value_1, q_value_2, step_size, beta):
         else:
             stay = 0
 
-        #print(stay)
-        #print(action)
+        print(stay)
+        print(action)
         
         reward = process(action[0], action[1])
         rewards[0] += reward[0]
@@ -76,9 +76,9 @@ def q_learning(q_value_1, q_value_2, step_size, beta):
                 reward[0] + delta * np.max(q_value_1[action_idx[0], action_idx[1], :, :]) -
                 q_value_1[state_idx[0], state_idx[1], action_idx[0], action_idx[1]])
         
-        q_value_2[state_idx[0], state_idx[1], action_idx[0], action_idx[1]] += step_size * (
+        q_value_2[state_idx[0], state_idx[1], action_idx[1], action_idx[0]] += step_size * (
                 reward[1] + delta * np.max(q_value_2[action_idx[0], action_idx[1], :, :]) -
-                q_value_2[state_idx[0], state_idx[1], action_idx[0], action_idx[1]])
+                q_value_2[state_idx[0], state_idx[1], action_idx[1], action_idx[0]])
         
         state = next_state
         state_idx = action_idx
