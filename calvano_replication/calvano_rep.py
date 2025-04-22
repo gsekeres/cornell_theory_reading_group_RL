@@ -29,29 +29,22 @@ m = 15
 action_space_1 = np.linspace(pn[0]-xi*(pm[0]-pn[0]),pm[0]+xi*(pm[0]-pn[0]),m)
 action_space_2 = np.linspace(pn[1]-xi*(pm[1]-pn[1]),pm[1]+xi*(pm[1]-pn[1]),m)
 
-q_inital = [0,0,0,0]
-q_list = np.zeros(15)
-for i in range(action_space_1.size):
-    sum = 0
-    for j in range(action_space_2.size):
-        temp = process(action_space_1[i], action_space_2[j])
-        sum += temp[0]
-    q_list[i] = sum
+q_value_1 = np.zeros((len(action_space_1), len(action_space_2), len(action_space_1), len(action_space_2)))
+q_value_2 = np.zeros((len(action_space_1), len(action_space_2), len(action_space_1), len(action_space_2)))
+for k in range(len(action_space_1)):
+    rewards = 0
+    for l in range(len(action_space_2)):
+        rewards += process(action_space_1[k], action_space_2[l])[0]
+    q_value_1[:, :, k, :] = rewards / ((1 - delta)*m)
 
-q_inital[2] = q_list
+for l in range(len(action_space_2)):
+    rewards = 0
+    for k in range(len(action_space_1)):
+        rewards += process(action_space_1[k], action_space_2[l])[1]
+    q_value_2[:, :, :, l] = rewards / ((1 - delta)*m)
 
-for i in range(action_space_2.size):
-    sum = 0
-    for j in range(action_space_1.size):
-        temp = process(action_space_1[j], action_space_2[i])
-        sum += temp[1]
-    sum = sum/((1-delta)*m)
-    q_list[i] = sum
-
-q_inital[3] = q_list
-
-def q_learning(q_value, step_size, beta):
-    state = [0,0] # inital state, need to be drawn randomly from action_space
+def q_learning(q_value_1, q_value_2, step_size, beta):
+    state = [0,0] # initial state, need to be drawn randomly from action_space
     state[0] = np.random.choice(action_space_1)
     state[1] = np.random.choice(action_space_2)
     rewards = [0,0]
@@ -60,8 +53,8 @@ def q_learning(q_value, step_size, beta):
     stay = 0
     while stay < 100000:
         time += 1
-        action[0] = choose_action(state, q_value, beta, time, 1) # price of good 1
-        action[1] = choose_action(state, q_value, beta, time, 2) # price of good 2
+        action[0] = choose_action(state, q_value_1, beta, time, 1) # price of good 1
+        action[1] = choose_action(state, q_value_2, beta, time, 2) # price of good 2
         next_state = action 
         if next_state == state:
             stay += 1
@@ -72,9 +65,12 @@ def q_learning(q_value, step_size, beta):
         rewards[0] += reward[0]
         rewards[1] += reward[1]
         # Q-Learning update
-        q_value[state[0], state[1], action[0], action[1]] += step_size * (
-                reward + delta * np.max(q_value[next_state[0], next_state[1], :, :]) -
-                q_value[state[0], state[1], action[0], action[1]])
+        q_value_1[state[0], state[1], action[0], action[1]] += step_size * (
+                reward[0] + delta * np.max(q_value_1[next_state[0], next_state[1], :, :]) -
+                q_value_1[state[0], state[1], action[0], action[1]])
+        q_value_2[state[0], state[1], action[0], action[1]] += step_size * (
+                reward[1] + delta * np.max(q_value_2[next_state[0], next_state[1], :, :]) -
+                q_value_2[state[0], state[1], action[0], action[1]])
         state = next_state
     return state
 
@@ -94,5 +90,5 @@ def choose_action(state, q_value, beta, time, index):
         return np.random.choice([action_ for action_, value_ in enumerate(values_) if value_ == np.max(values_)])
 
 if __name__ == "__main__":
-    p_optimal = q_learning(q_inital, 0.1, 0.00002)
+    p_optimal = q_learning(q_value_1, q_value_2, 0.1, 0.00002)
     print(p_optimal)
