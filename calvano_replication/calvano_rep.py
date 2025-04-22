@@ -44,18 +44,24 @@ for l in range(len(action_space_2)):
     q_value_2[:, :, :, l] = rewards / ((1 - delta)*m)
 
 def q_learning(q_value_1, q_value_2, step_size, beta):
-    state = [0,0] # initial state, need to be drawn randomly from action_space
-    state[0] = np.random.choice(action_space_1)
-    state[1] = np.random.choice(action_space_2)
-    rewards = [0,0]
+    # Get initial state indices
+    state_idx = [0, 0]
+    state_idx[0] = np.random.randint(len(action_space_1))
+    state_idx[1] = np.random.randint(len(action_space_2))
+    state = [action_space_1[state_idx[0]], action_space_2[state_idx[1]]]
+    
+    rewards = [0, 0]
     time = 0
-    action = [0,0]
+    action_idx = [0, 0]
     stay = 0
+    
     while stay < 100000:
         time += 1
-        action[0] = choose_action(state, q_value_1, beta, time, 1) # price of good 1
-        action[1] = choose_action(state, q_value_2, beta, time, 2) # price of good 2
-        next_state = action 
+        action_idx[0] = choose_action(state, q_value_1, beta, time, 1)  # index of price for good 1
+        action_idx[1] = choose_action(state, q_value_2, beta, time, 2)  # index of price for good 2
+        action = [action_space_1[action_idx[0]], action_space_2[action_idx[1]]]
+        next_state = action
+        
         if next_state == state:
             stay += 1
         else:
@@ -64,17 +70,21 @@ def q_learning(q_value_1, q_value_2, step_size, beta):
         reward = process(action[0], action[1])
         rewards[0] += reward[0]
         rewards[1] += reward[1]
-        # Q-Learning update
-        q_value_1[state[0], state[1], action[0], action[1]] += step_size * (
-                reward[0] + delta * np.max(q_value_1[next_state[0], next_state[1], :, :]) -
-                q_value_1[state[0], state[1], action[0], action[1]])
-        q_value_2[state[0], state[1], action[0], action[1]] += step_size * (
-                reward[1] + delta * np.max(q_value_2[next_state[0], next_state[1], :, :]) -
-                q_value_2[state[0], state[1], action[0], action[1]])
+        
+        # Q-Learning update using indices
+        q_value_1[state_idx[0], state_idx[1], action_idx[0], action_idx[1]] += step_size * (
+                reward[0] + delta * np.max(q_value_1[action_idx[0], action_idx[1], :, :]) -
+                q_value_1[state_idx[0], state_idx[1], action_idx[0], action_idx[1]])
+        
+        q_value_2[state_idx[0], state_idx[1], action_idx[0], action_idx[1]] += step_size * (
+                reward[1] + delta * np.max(q_value_2[action_idx[0], action_idx[1], :, :]) -
+                q_value_2[state_idx[0], state_idx[1], action_idx[0], action_idx[1]])
+        
         state = next_state
+        state_idx = action_idx
+    
     return state
 
-# choose an action based on epsilon greedy algorithm
 def choose_action(state, q_value, beta, time, index):
     EPSILON = np.exp(-beta*time)
     if index == 1:
@@ -83,11 +93,13 @@ def choose_action(state, q_value, beta, time, index):
         action_space = action_space_2
         
     if np.random.binomial(1, EPSILON) == 1:
-        return np.random.choice(action_space)
+        return np.random.randint(len(action_space))
     else:
-        values_ = q_value[state[0], state[1], :]
-        action_ = action_space
-        return np.random.choice([action_ for action_, value_ in enumerate(values_) if value_ == np.max(values_)])
+        # Convert state to indices
+        state_idx_0 = np.where(action_space_1 == state[0])[0][0]
+        state_idx_1 = np.where(action_space_2 == state[1])[0][0]
+        values_ = q_value[state_idx_0, state_idx_1, :]
+        return np.random.choice(np.where(values_ == np.max(values_))[0])
 
 if __name__ == "__main__":
     p_optimal = q_learning(q_value_1, q_value_2, 0.1, 0.00002)
