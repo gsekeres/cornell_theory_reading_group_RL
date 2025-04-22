@@ -1,0 +1,126 @@
+\documentclass{beamer}
+\usetheme{metropolis} 
+\usepackage{listings}
+\usepackage{xcolor}
+\definecolor{myBlue}{RGB}{0, 0, 180}
+\definecolor{myGreen}{RGB}{34, 139, 34}
+\definecolor{myRed}{RGB}{180, 0, 0}
+\definecolor{myGray}{RGB}{96, 96, 96}
+\lstset{ 
+    language=Python,
+    basicstyle=\ttfamily\tiny,
+    keywordstyle=\color{myBlue},
+    commentstyle=\color{myGreen},
+    stringstyle=\color{myRed},
+    showstringspaces=false,
+    numberstyle=\tiny\color{myGray},
+    stepnumber=1,
+    numbersep=5pt,
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=true,
+    tabsize=4,
+    captionpos=b
+}
+\title{Artificial Intelligence, Algorithmic Pricing, and Collusion}
+\subtitle{Emilio Calvano, Giacomo Calzolari, Vincenzo Denicol\`{o}, and Sergio Pastorello}
+\date{\today}
+\author{Gabe Sekeres and Finn Ye}
+\institute{Cornell University}
+\begin{document}
+
+
+\maketitle
+
+
+
+
+\section{Background}
+
+\begin{frame}\frametitle{Motivation}
+	\begin{itemize}
+		\item Algorithms becoming increasingly prevalent in practice
+		\begin{itemize}
+			\item German gasoline markets (Assad et al. 2024)
+			\item Smartphone price discrimination (Kehoe et al. 2020)
+		\end{itemize}
+		\item Regulatory questions: \begin{itemize} \item How do algorithms get to collusive prices? \item Can they do so in the absence of active principals? \item Is algorithmic collusion visibly different than tacit collusion? \end{itemize}
+		\item Massive lack of theoretical guarantees for this (see Banchio and Mantegazza (2023); Possnig (2024); Lamba and Zhuk (2025))
+	\end{itemize}	
+\end{frame}
+
+\begin{frame}\frametitle{Q-Learning Algorithms}
+	\begin{itemize}
+		\item We're familiar with Q-learners 
+		\item Specifically, they learn \emph{slowly}. This example has a massive state space and is trying to learn the opponent's policy as part of the state
+		\item Our biggest criticisms are related to this. Specifically: \begin{itemize} \item What is the loss in the learning phase? \item How sensitive are these results to the initialization of the Q-matrix?\end{itemize}
+	\end{itemize}
+\end{frame}
+
+\section{Model}
+
+\begin{frame}\frametitle{Environment}
+	Canonical oligopoly pricing game, with $n$ firms / products and an outside good, where in each period $t$ the demand for good $i$ is \[q_{i,t} = \frac{e^{\frac{a_i-p_{i,t}}{\mu}}}{\sum_{j=1}^n e^{\frac{a_j - p_{j,t}}{\mu}} + e^{\frac{a_0}{\mu}}}\]where $a_i$ is an index of quality, $\mu$ is in index of differentiation, and $a_0$ is an outside good. Firms choose $p_{i,t}$, and we have exogenous marginal costs $c_i$. The stage problem is:\[\max_{p_{i,t}} q_{i,t}(p_{i,t}) \cdot p_{i,t} - q_{i,t}(p_{i,t}) \cdot c_{i,t}\]This is quasiconcave but does not in general have a nice closed form solution.
+\end{frame}
+\begin{frame}\frametitle{Simplified Stage Environment}
+	Assume $n=2$, $c_i = 1$, $a_i = 2$, $a_0=0$, and $\mu = \frac{1}{4}$. Then the stage game reduces to\[\max_{p_i} \frac{(p_i - 1)e^{8 - 4p_{i}}}{e^{8 - 4p_{i}} + e^{8 - 4p_{j}} + 1}\]This is strictly concave, and we have that it admits Nash prices\[p^N_i = p^N_j \approx 1.473\]and monopoly prices are obtained from setting $n=1$, where we attain \[p^M = \frac{5}{4} - \frac{1}{4}W_n(2e^{3}) \approx 1.925\]
+\end{frame}
+\begin{frame}\frametitle{Simplified Stage Environment}
+	We basically have an extension of a Prisoner's Dilemma:
+	\[
+	\begin{array}{c|cc}
+		& N & M \\\hline N & (0.22,0.22) & (0.37,0.12) \\ M &(0.12,0.37) & (0.34,0.34)
+	\end{array}	\]
+	Since all of the involved functions are continuous and concave, this extends fairly nicely. 
+	
+	So we're making our Q-learners play a repeated Prisoner's Dilemma, and the strategies they learn \emph{should} be similar to canonical repeated PD strategies.
+\end{frame}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+\end{document}
