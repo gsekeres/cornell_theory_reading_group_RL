@@ -39,6 +39,7 @@ for l in range(m):
         rewards += process(action_space[k], action_space[l])[1]
     q_value_2[:, :, l, :] = rewards / ((1 - delta)*m)
 
+
 def q_learning(q_value_1, q_value_2, step_size, beta):
     # Get initial state indices
     state_idx = [0, 0]
@@ -98,5 +99,5 @@ def choose_action(state, q_value, beta, time, index):
         return np.random.choice(np.where(values_ == np.max(values_))[0])
 
 if __name__ == "__main__":
-    p_optimal = q_learning(q_value_1, q_value_2, 0.1, 0.00002)
+    p_optimal = q_learning(q_value_1, q_value_2, 0.15, 0.000004)
     print(p_optimal)
