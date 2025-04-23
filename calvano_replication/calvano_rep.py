@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 a0 = 0
 mu = 0.25
@@ -65,8 +67,8 @@ def q_learning(q_value_1, q_value_2, step_size, beta):
         else:
             stay = 0
 
-        print(stay)
-        print(action)
+        #print(stay)
+        #print(action)
         
         reward = process(action[0], action[1])
         rewards[0] += reward[0]
@@ -99,5 +101,45 @@ def choose_action(state, q_value, beta, time, index):
         return np.random.choice(np.where(values_ == np.max(values_))[0])
 
 if __name__ == "__main__":
-    p_optimal = q_learning(q_value_1, q_value_2, 0.15, 0.000004)
-    print(p_optimal)
+    prices = np.zeros((100, 100, 2))
+    avg_profit = np.zeros((100, 100))
+    alphas = np.linspace(0.025, 0.25, 100)
+    betas = np.linspace(0.000000000000001, 0.00002, 100)
+    for i in range(100):
+        for j in range(100):
+            p_optimal = q_learning(q_value_1, q_value_2, alphas[i], betas[j])
+            prices[i, j, 0] = p_optimal[0]
+            prices[i, j, 1] = p_optimal[1]
+            avg_profit[i, j] = (profit(p_optimal[0], p_optimal[1]) + profit(p_optimal[1], p_optimal[0]))/2
+            print(f"alpha: {alphas[i]}, beta: {betas[j]}, per-firm profit: {avg_profit[i, j]}")
+    
+    profit_gain = (avg_profit - profit(pn,pn)) / (profit(pm,pm)-profit(pn,pn))
+    
+    # Create the heatmap plot
+    plt.figure(figsize=(10, 8), facecolor='none')
+    heatmap = sns.heatmap(profit_gain, 
+                      cmap='thermal',  # Using the thermal colormap as requested
+                      xticklabels=np.round(betas[::10], 8),  # Show fewer ticks for readability
+                      yticklabels=np.round(alphas[::10], 3),
+                      cbar_kws={'label': 'Profit Gain Ratio'})
+
+    # Set labels and title
+    plt.xlabel('Beta')
+    plt.ylabel('Alpha')
+
+    # Improve tick label formatting
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+
+    # Set the axes background to transparent too
+    ax = plt.gca()
+    ax.patch.set_alpha(0)
+
+    # Save the figure with transparent background
+    plt.savefig('profit_gain_heatmap.png', 
+            dpi=300, 
+            bbox_inches='tight',
+            transparent=True)  # This ensures transparency in the saved image
+
+    # If you want to also display the plot
+    plt.show()
