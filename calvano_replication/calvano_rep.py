@@ -86,7 +86,7 @@ def q_learning(q_value_1, q_value_2, step_size, beta):
         state = next_state
         state_idx = action_idx
     
-    return state
+    return state, time
 
 def choose_action(state, q_value, beta, time, index):
     EPSILON = np.exp(-beta*time)
@@ -101,17 +101,19 @@ def choose_action(state, q_value, beta, time, index):
         return np.random.choice(np.where(values_ == np.max(values_))[0])
 
 if __name__ == "__main__":
-    prices = np.zeros((100, 100, 2))
-    avg_profit = np.zeros((100, 100))
-    alphas = np.linspace(0.025, 0.25, 100)
-    betas = np.linspace(0.000000000000001, 0.00002, 100)
-    for i in range(100):
-        for j in range(100):
-            p_optimal = q_learning(q_value_1, q_value_2, alphas[i], betas[j])
+    num_alphas = 15
+    num_betas = 1
+    prices = np.zeros((num_alphas, num_betas, 2))
+    avg_profit = np.zeros((num_alphas, num_betas))
+    alphas = np.linspace(0.1, 0.2, num_alphas)
+    betas = np.linspace(0.000005, 0.000005, num_betas)
+    for i in range(num_alphas):
+        for j in range(num_betas):
+            p_optimal, time_to_learn = q_learning(q_value_1, q_value_2, alphas[i], betas[j])
             prices[i, j, 0] = p_optimal[0]
             prices[i, j, 1] = p_optimal[1]
             avg_profit[i, j] = (profit(p_optimal[0], p_optimal[1]) + profit(p_optimal[1], p_optimal[0]))/2
-            print(f"alpha: {alphas[i]}, beta: {betas[j]}, per-firm profit: {avg_profit[i, j]}")
+            print(f"alpha: {alphas[i]}, beta: {betas[j]}, per-firm profit: {avg_profit[i, j]}, time to learn: {time_to_learn}")
     
     profit_gain = (avg_profit - profit(pn,pn)) / (profit(pm,pm)-profit(pn,pn))
     
@@ -121,7 +123,8 @@ if __name__ == "__main__":
                       cmap='thermal',  # Using the thermal colormap as requested
                       xticklabels=np.round(betas[::10], 8),  # Show fewer ticks for readability
                       yticklabels=np.round(alphas[::10], 3),
-                      cbar_kws={'label': 'Profit Gain Ratio'})
+                      cbar_kws={'label': 'Profit Gain Ratio'},
+                      vmin=0, vmax=1)
 
     # Set labels and title
     plt.xlabel('Beta')
