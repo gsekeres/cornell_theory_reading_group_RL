@@ -30,9 +30,9 @@
 \begin{document}
 
 
-\maketitle
-
-
+\begin{frame}
+	\titlepage
+\end{frame}
 
 
 \section{Background}
@@ -73,22 +73,105 @@
 	\end{array}	\]
 	Since all of the involved functions are continuous and concave, this extends fairly nicely. 
 	
-	So we're making our Q-learners play a repeated Prisoner's Dilemma, and the strategies they learn \emph{should} be similar to canonical repeated PD strategies.
+	So we're making our Q-learners play a repeated Prisoner's Dilemma, and the strategies they learn \emph{should} be similar to canonical repeated PD strategies. 
 \end{frame}
 
+\begin{frame}\frametitle{Folk Theorem}
+\begin{center}
+	\begin{tikzpicture}[scale=1]
+		\filldraw[blue,nearly transparent] (3.4,3.4)--(3.55,2.2)--(2.2,2.2)--(2.2,3.55)--(3.4,3.4);
+		\draw[very thick, <->] (0,5)--(0,0)--(5,0);
+		\draw[thick] (2.2,2.2)--(1.2,3.7)--(3.4,3.4)--(3.7,1.2)--(2.2,2.2);
+		\filldraw (2.2,2.2) circle(2pt);
+		\filldraw (1.2,3.7) circle(2pt);
+		\filldraw (3.7,1.2) circle(2pt);
+		\filldraw (3.4,3.4) circle(2pt);
+		\draw[dashed,thick] (3.55,2.2)--(2.2,2.2)--(2.2,3.55);
+		\node[below left] at (2.2,2.2) {\scriptsize$(0.22,0.22)$};
+		\node[above right] at (3.4,3.4) {\scriptsize$(0.34,0.34)$};
+		\node[right] at (3.7,1.2) {\scriptsize$(0.37,0.12)$};
+		\node[above] at (1.2,3.7) {\scriptsize$(0.12,0.37)$};
+	\end{tikzpicture}
+\end{center}
+\end{frame}
 
+\begin{frame}\frametitle{Continuous Stage Payoffs}
+	\includegraphics[width=10cm]{cont_plot.png}
+\end{frame}
 
+\begin{frame}\frametitle{A Question}
+	Why use this sigmoid demand function instead of exogenously imposing a reasonable range for prices and using \emph{e.g.} linear demand?
+	
+	We don't understand what the gain from this functional form is, and the fact that it doesn't in general have closed-form solutions is an annoyance.
+\end{frame}
 
+\section{Learning Theory}
 
+\begin{frame}\frametitle{Learning in Repeated Games}
+	Essentially, take the opponent's previous actions to be the state, along with whatever game parameters you need. Two issues:
+	\begin{enumerate}
+		\item The state space is increasing as the game continues. \\ Solution: Bounded memory. 
+		\item The optimization problem is non-stationary if the opponent(s) change strategy over time. \\ No official solutions here, this is why we don't have theoretical guarantees\footnote{I'm fairly sure there should be something here. At least in probability. I'm confused why nobody has proved that yet - Gabe}
+	\end{enumerate}
+\end{frame}
 
+\begin{frame}\frametitle{Learning in Repeated Games}
+	The Q-learners solve \[Q(s,a) = \mathbb{E}(\pi \mid s,a) + \delta \mathbb{E}\left[ \max_{a'\in A} Q(s',a') \mid s,a\right]\] where $a \in A$ is the action (from the rules of the game), $s \in S$ is the state (defined as all player actions in the last $k$ periods, where $k$ is the memory). Once we discretize, $Q \in \mathbb{R}^{|A| \times |S|} = \mathbb{R}^{|A| \times |A|^{nk}}$
+	
+	For simplicity, $k=1$. Results robust to higher $k$.
+\end{frame}
 
+\begin{frame}\frametitle{Parameterization}
+	Work in the simplified game as above, with $\delta = 0.95$ and $|A| = m = 15$. Discretize the price grid over \[\left[p^N - 0.1(p^M - p^N), p^M + 0.1(p^M - p^N)\right]\] Set the initial matrix to the discounted payoff if the other player randomized over all actions: \[Q_{i,0}(s,a_i) = \frac{\sum_{a_{-i} \in A^{n-1}}\pi_i(a_i,a_{-i})}{(1-\delta) |A|^{n-1}}\]Draw the initial state $s_0$ randomly as well.
+\end{frame}
 
+\begin{frame}\frametitle{Continuous Stage Payoffs}
+\centering
+	\includegraphics[width=10cm]{cont_plot.png}
+\end{frame}
+\begin{frame}\frametitle{Discretized Stage Payoffs}
+\centering
+	\includegraphics[width=8cm]{heatmap_plot.png}
+\end{frame}
 
+\begin{frame}\frametitle{Parameterization}
+	We will use $\varepsilon$-greedy learners, with $\varepsilon_t = \exp(-\beta t)$. The learning parameter $\alpha$ will be tested over a grid of 100 points in $[0.025, 0.25]$, and several different values of $\beta$ are also tested. 
+	
+	They define $\nu$ to be the number of times a certain cell is visited in expectation under a certain $\beta$. For our purposes, $\beta$ will be tested over a grid of 100 points in $(0,2 \cdot 10^{-5})$. 
+	
+	Recall from earlier:\[Q(s,a) \leftarrow Q(s,a) + \alpha \left[ \pi(s',a') + \delta \max_{a'\in A} Q(s',a') - Q(s,a)\right]\]
+\end{frame}
 
+\begin{frame}\frametitle{Learning Visualization}
+	\centering
+	\begin{tikzpicture}[scale=2]
+		\draw[thick] (0,0)--(2,0);
+		\filldraw[color=black, fill=white] (0,0) circle(5pt);
+		\node at (0,0) {\scriptsize$s$};
+		\filldraw (1,0) circle(2pt);
+		\filldraw[color=black, fill=white] (2,0) circle(5pt);
+		\node at (2,0) {\scriptsize$s'$};
+		\node[above right] at (1,0) {\scriptsize$\pi(a,a_{-1})$};
+		\node[below left] at (1,0) {\scriptsize$a$};
+		\filldraw[color=black, fill=white] (-0.5,-1.1) circle(10pt);
+		\node at (-0.5,-1) {\tiny$\langle p_1^{0},p_{2}^{0},$};
+		\node at (-0.5,-1.2) {\tiny$\pi_i(p_1^{0},p_{2}^{0}) \rangle$};
+		\draw[thick,->] (-0.1,-1.1) -- (.9,-1.1);
+		\node[above] at (.375,-1.1) {\tiny$p_i^1$};
+		\draw[thick,->] (1,-2) -- (1,-1.2);
+		\filldraw (1,-1.1) circle(2pt);
+	\end{tikzpicture}
+\end{frame}
 
+\begin{frame}\frametitle{Remark}
+	
+\end{frame}
 
-
-
+\begin{frame}\frametitle{Remark}
+	Prior to this, we've generally dealt with RL algorithms that are trying to learn \alert{payoffs} in a static or stochastic game. These algorithms are (theoretically) learning \alert{strategies} for the infinitely repeated game. 
+	
+	Thinking about the bounded memory, that's no longer such an innocuous assumption. For example: these algorithms will be able to learn tit-for-tat or Grim Trigger, but not trigger strategies with $n$ periods of punishment for $n > k$.
+\end{frame}
 
 
 
