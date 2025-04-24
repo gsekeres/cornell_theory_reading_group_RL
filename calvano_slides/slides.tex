@@ -140,38 +140,14 @@
 \end{frame}
 
 \begin{frame}\frametitle{An Issue}
-	If you initialize $Q_0$ precisely the way that they say they do, stuff breaks immediately. Specifically, we saw one of two patterns: either for all parameters convergence was to the same pair ($\approx 1.58$), which is not the collusive equilibrium, or convergence was to a clearly suboptimal pair (\emph{e.g.} $1.8926$ and $1.4277$). 
+	Their definition of $Q_0$ doesn't make sense. We incorporate $\delta$ by updating one period at a time, not sending time far into the future: \[Q(s,a) = \mathbb{E}(\pi \mid s,a) + \textcolor{red}{\delta} \mathbb{E}\left[ \max_{a'\in A} Q(s',a') \mid s,a\right]\]
+	This may be why they saw instability as $\beta \to \bar{\beta}$: if exploration degenerates too quickly, the learners may get ``stuck'' at a pair that is suboptimal but wasn't updated downwards enough. 
 	
-	This was fixed entirely by removing $(1-\delta)$ from the denominator.
 	\[
 	\underbrace{\frac{\sum_{a_{-i} \in A^{n-1}}\pi_i(a_i,a_{-i})}{(1-\delta) |A|^{n-1}}}_{\text{Bad}} \qquad\qquad \qquad \underbrace{\frac{\sum_{a_{-i} \in A^{n-1}}\pi_i(a_i,a_{-i})}{ |A|^{n-1}}}_\text{Good}
 	\]
+	(We test both, and show some results later)
 \end{frame}
-\begin{frame}\frametitle{Why does this happen?}
-	\begin{itemize}[<+->]
-		\item[] 
-		\item[] {\Huge \shrug}
-	\end{itemize}
-\end{frame}
-\begin{frame}\frametitle{Some Theories}
-	\begin{itemize}
-		\item The obvious note is that this is the discounted payoff until infinity
-		\item The issue is that this is not how learning works. We incorporate $\delta$ by updating one period at a time, not sending time far into the future: \[Q(s,a) = \mathbb{E}(\pi \mid s,a) + \textcolor{red}{\delta} \mathbb{E}\left[ \max_{a'\in A} Q(s',a') \mid s,a\right]\]
-		\item By including the tail, we massively overestimate the value to each action
-		\item $\varepsilon$ degenerating quickly explains convergence to a random suboptimal pair
-	\end{itemize}
-\end{frame}
-\begin{frame}\frametitle{Some More Theories}
-	\begin{itemize}[<+->]
-		\item Why did we get to that $(1.58,1.58)$ pair, however? \bigskip
-		\item {\huge \shrug} \bigskip
-		\item We'd love any theories you have. Finn's: 
-		\item[]\begin{center}
-			\alert{One of the algo just beat the other one to death and force them to play Nash}
-		\end{center}
-	\end{itemize}
-\end{frame}
-
 \begin{frame}\frametitle{Continuous Stage Payoffs}
 \centering
 	\includegraphics[width=10cm]{cont_plot.png}
@@ -226,10 +202,59 @@
 
 \section{Code}
 
+\begin{frame}\frametitle{Python vs. Julia pt. $N$}
+	\begin{itemize}
+		\item The authors wrote the code in Fortran, which neither of us know because we were both born in 2001 
+		\item Finn rewrote it in Python, and we'll present that code because it's the most similar to what we've seen previously
+		\item Gabe refactored it into Julia and parallelized it, which increased the speed by a massive amount (2hrs $\to$ 5.5mins)
+		\item The results below are from Julia, because it's more robust
+	\end{itemize}
+\end{frame}
+
+\begin{frame}\frametitle{High-level structure}
+	\begin{itemize}
+		\item Exact same as when we defined Q-learning previously, except that we now update two Q-matrices instead of one
+		\item Rough pseudocode: 
+		\begin{enumerate}
+			\item Define $Q_0$ for each player, taking the expected value if other player chooses randomly
+			\item Define action choice function (as always, $\varepsilon$-greedy)
+			\item Iteratively learn, updating using the rule:\[Q(s,a) = \mathbb{E}(\pi \mid s,a) + \delta \mathbb{E}\left[ \max_{a'\in A} Q(s',a') \mid s,a\right]\]
+			\item End when $100,000$ periods of convergence, defined as either \begin{itemize} \item[(i)] $s_t = (a^1_t,a^2_t) = (a^1_{t+1},a^2_{t+1}) = s_{t+1}$ \item[(ii)] $s_t = s_{t-2}$ \alert{and} $s_{t+1} = s_{t-1}$ \end{itemize}
+			\item Return average per-firm profit once converged, compare to Nash / Monopoly profit
+		\end{enumerate}
+	\end{itemize}
+	
+\end{frame}
+
+\begin{frame}\frametitle{Changes}
+	We had to make some small changes to make the logic work. The main ones are:
+	\begin{itemize}
+		\item Added an arbitrary cutoff for saying convergence failed (10m)
+		\item Allowed cycles of 2 to be defined as convergence
+		\item Ran many fewer times (25 experiments, across a $15 \times 15$ grid)
+	\end{itemize}
+	These were mainly runtime issues. If we had access to a supercomputing cluster, we could do a significantly more robust replication (\emph{hint hint})
+\end{frame}
+
+\begin{frame}\frametitle{Parameterization}
+	Exact same as in the paper, except we used 15 realizations of $\alpha$ and $\beta$, on the intervals $[0.1,0.2]$ and $[5 \cdot 10^{-6},1.5 \cdot 10^{-5}]$ respectively. Specifically, we have:
+	\begin{center}
+		\begin{tikzpicture}
+			\node<1-> at (0,0) {\includegraphics[width=8cm]{calvano_fig_1.png}};
+			\draw<2->[blue,thick] (-1.5,0) rectangle (1.2,1.6);
+		\end{tikzpicture}
+	\end{center}
+	
+\end{frame}
+
 
 \section{Results}
 
-
+\begin{frame}\frametitle{One Run}
+	\begin{center}
+		\includegraphics[width=9cm]{heatmap_profit_gain_gs.png}
+	\end{center}
+\end{frame}
 
 
 

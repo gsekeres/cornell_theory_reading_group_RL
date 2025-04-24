@@ -103,7 +103,7 @@ end
 savefig(heatmap_plot, "cornell_theory_reading_group_RL/calvano_slides/heatmap_plot.png")
 
 
-# Plot converged profit gain
+# Plot converged profit gain FROM A SINGLE RUN of PYTHON CODE
 # Read the CSV files
 profit_gain_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/profit_gain.csv", DataFrame, header=false)
 avg_profit_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/avg_profit.csv", DataFrame, header=false)
@@ -123,7 +123,7 @@ betas = betas_df[:, 1]
 # Create the heatmap
 heatmap_profit_gain = heatmap(
     1:size(profit_gain, 2), 1:size(profit_gain, 1), profit_gain,
-    color=:reds,
+    color=:thermal,
     xlabel=L"\alpha",
     ylabel=L"\beta",
     aspectratio=:equal,
@@ -147,6 +147,81 @@ beta_labels = [string(round(b, digits=8)) for b in betas[tick_indices_y]]
 xticks!(heatmap_profit_gain, tick_indices_x, alpha_labels)
 yticks!(heatmap_profit_gain, tick_indices_y, beta_labels)
 
-savefig(heatmap_profit_gain, "cornell_theory_reading_group_RL/calvano_slides/heatmap_profit_gain.png")
+savefig(heatmap_profit_gain, "cornell_theory_reading_group_RL/calvano_slides/heatmap_profit_gain_once.png")
+
+
+# Plot converged profit gain from 25 runs of Julia code (no 1-delta in denom)
+profit_gain_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/julia_output/profit_gain.csv", DataFrame, header=false)
+alphas_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/julia_output/alphas.csv", DataFrame, header=true)
+betas_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/julia_output/betas.csv", DataFrame, header=true)
+
+alphas = alphas_df[:, 1]
+betas = betas_df[:, 1]
+profit_gain = Matrix(profit_gain_df)
+
+heatmap_profit_gain = heatmap(
+    1:size(profit_gain, 2), 1:size(profit_gain, 1), profit_gain,
+    color=:thermal,
+    xlabel=L"\alpha",
+    ylabel=L"\beta",
+    aspectratio=:equal,
+    margin=5mm,
+    tickdirection=:out,
+    size=(800, 700),
+    background=:transparent,
+    grid=false,
+    framestyle=:box  # Added a box frame for better visibility
+)
+
+# Add custom x and y tick labels (fewer ticks for readability)
+tick_indices_x = 1:3:length(alphas)
+tick_indices_y = 1:3:length(betas)
+
+# Format the labels to be more readable
+alpha_labels = [string(round(a, digits=3)) for a in alphas[tick_indices_x]]
+beta_labels = [string(round(b, digits=8)) for b in betas[tick_indices_y]]
+
+# Set the tick values and labels
+xticks!(heatmap_profit_gain, tick_indices_x, alpha_labels)
+yticks!(heatmap_profit_gain, tick_indices_y, beta_labels)
+
+savefig(heatmap_profit_gain, "cornell_theory_reading_group_RL/calvano_slides/heatmap_profit_gain_25_nodelta.png")
+
+# Plot converged profit gain from 25 runs of Julia code (with 1-delta in denom)
+profit_gain_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/julia_output_delta/profit_gain.csv", DataFrame, header=false)
+alphas_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/julia_output_delta/alphas.csv", DataFrame, header=true)
+betas_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/julia_output_delta/betas.csv", DataFrame, header=true)
+
+alphas = alphas_df[:, 1]
+betas = betas_df[:, 1]
+profit_gain = Matrix(profit_gain_df)
+
+heatmap_profit_gain = heatmap(
+    1:size(profit_gain, 2), 1:size(profit_gain, 1), profit_gain,
+    color=:thermal,
+    xlabel=L"\alpha",
+    ylabel=L"\beta",
+    aspectratio=:equal,
+    margin=5mm,
+    tickdirection=:out,
+    size=(800, 700),
+    background=:transparent,
+    grid=false,
+    framestyle=:box  # Added a box frame for better visibility
+)
+
+# Add custom x and y tick labels (fewer ticks for readability)
+tick_indices_x = 1:3:length(alphas)
+tick_indices_y = 1:3:length(betas)
+
+# Format the labels to be more readable
+alpha_labels = [string(round(a, digits=3)) for a in alphas[tick_indices_x]]
+beta_labels = [string(round(b, digits=8)) for b in betas[tick_indices_y]]
+
+# Set the tick values and labels
+xticks!(heatmap_profit_gain, tick_indices_x, alpha_labels)
+yticks!(heatmap_profit_gain, tick_indices_y, beta_labels)
+
+savefig(heatmap_profit_gain, "cornell_theory_reading_group_RL/calvano_slides/heatmap_profit_gain_25_delta.png")
 
 
