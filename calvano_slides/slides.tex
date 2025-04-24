@@ -176,20 +176,19 @@
 		\node at (2,0) {\scriptsize$s'$};
 		\node[above right] at (1,0) {\scriptsize$\pi(a,a_{-1})$};
 		\node[below left] at (1,0) {\scriptsize$a$};
-		\filldraw[color=black, fill=white] (-0.5,-1.1) circle(10pt);
-		\node at (-0.5,-1) {\tiny$\langle p_1^{0},p_{2}^{0},$};
-		\node at (-0.5,-1.2) {\tiny$\pi_i(p_1^{0},p_{2}^{0}) \rangle$};
-		\draw[thick,->] (-0.1,-1.1) -- (.9,-1.1);
-		\node[above] at (.375,-1.1) {\tiny$p_i^1$};
+		\draw[thick,->] (.2,-1.1) -- (.9,-1.1);
+		\filldraw[color=black, fill=white] (0,-1.1) circle(7pt);
+		\node at (0,-1.1) {\tiny$\left\langle p_1^{0},p_{2}^{0} \right\rangle$};
+		
+		\node[above] at (.5,-1.1) {\tiny$p_i^1$};
 		\draw[thick,->] (1,-2) -- (1,-1.2);
 		\filldraw (1,-1.1) circle(2pt);
 		\node[right] at (1,-1.6) {\tiny$p_{-i}^1$};
 		\node[above right] at (1,-1.1) {\tiny$\pi_i(p_1^1,p_2^1)$};
 		\filldraw (0.9,-2)--(1.1,-2)--(1.1,-2.2)--(0.9,-2.2)--(0.9,-2);
-		\draw[thick,->] (1.1,-1.1)--(2,-1.1);
-		\filldraw[color=black, fill=white] (2.5,-1.1) circle(10pt);
-		\node at (2.5,-1) {\tiny$\langle p_1^{1},p_{2}^{1},$};
-		\node at (2.5,-1.2) {\tiny$\pi_i(p_1^{1},p_{2}^{1}) \rangle$};
+		\draw[thick,->] (1.1,-1.1)--(1.74,-1.1);
+		\filldraw[color=black, fill=white] (2,-1.1) circle(7pt);
+		\node at (2,-1.1) {\tiny$\left\langle p_1^{1},p_{2}^{1}\right\rangle$};
 	\end{tikzpicture}
 \end{frame}
 
@@ -252,15 +251,24 @@
 
 \begin{frame}\frametitle{One Run}
 	\begin{center}
-		\includegraphics[width=9cm]{heatmap_profit_gain_gs.png}
+		\includegraphics[width=9cm]{heatmap_profit_gain_once.png}
+	\end{center}
+\end{frame}
+
+
+\begin{frame}\frametitle{25 Runs, no $(1-\delta)$}
+	\begin{center}
+		\includegraphics[width=9cm]{heatmap_profit_gain_25_nodelta.png}
 	\end{center}
 \end{frame}
 
 
 
-
-
-
+\begin{frame}\frametitle{25 Runs, $(1-\delta)$}
+	\begin{center}
+		\includegraphics[width=9cm]{heatmap_profit_gain_25_delta.png}
+	\end{center}
+\end{frame}
 
 
 

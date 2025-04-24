@@ -76,6 +76,7 @@ heatmap_plot = heatmap(
     size=(800, 700),
     background=:transparent,
     grid=false,
+    yaxis=:mirror,
     framestyle=:none  # Keep the frame but not the ticks
 )
 annotate!(heatmap_plot, 8, -0.8, text(L"p_2", 10))
@@ -105,47 +106,42 @@ savefig(heatmap_plot, "cornell_theory_reading_group_RL/calvano_slides/heatmap_pl
 
 # Plot converged profit gain FROM A SINGLE RUN of PYTHON CODE
 # Read the CSV files
-profit_gain_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/profit_gain.csv", DataFrame, header=false)
-avg_profit_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/avg_profit.csv", DataFrame, header=false)
-prices_0_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/prices_0.csv", DataFrame, header=false)
-prices_1_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/prices_1.csv", DataFrame, header=false)
+profit_gain_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/profit_gain_gs.csv", DataFrame, header=false)
 alphas_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/alphas.csv", DataFrame, header=true)
 betas_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/betas.csv", DataFrame, header=true)
 
 # Convert DataFrames to matrices
 profit_gain = Matrix(profit_gain_df)
-avg_profit = Matrix(avg_profit_df)
-prices_0 = Matrix(prices_0_df)
-prices_1 = Matrix(prices_1_df)
+clims_ref = extrema(profit_gain)  
 alphas = alphas_df[:, 1]
 betas = betas_df[:, 1]
+
+# Format the labels to be more readable
+alpha_labels = [string(round(a, digits=3)) for a in alphas]
+beta_labels = [string(round(b * 10^5, digits=3)) for b in betas]
 
 # Create the heatmap
 heatmap_profit_gain = heatmap(
     1:size(profit_gain, 2), 1:size(profit_gain, 1), profit_gain,
     color=:thermal,
-    xlabel=L"\alpha",
-    ylabel=L"\beta",
+    ylabel=L"\alpha",
+    xlabel=L"\beta \times 10^{5}",
     aspectratio=:equal,
-    margin=5mm,
-    tickdirection=:out,
+    margin=0mm,
+    xticks=(1:15, beta_labels),
+    yticks=(1:15, alpha_labels),
+    tickdirection=:none,
     size=(800, 700),
     background=:transparent,
     grid=false,
-    framestyle=:box  # Added a box frame for better visibility
+    framestyle=:none  # Keep the frame but not the ticks
 )
-
-# Add custom x and y tick labels (fewer ticks for readability)
-tick_indices_x = 1:3:length(alphas)
-tick_indices_y = 1:3:length(betas)
-
-# Format the labels to be more readable
-alpha_labels = [string(round(a, digits=3)) for a in alphas[tick_indices_x]]
-beta_labels = [string(round(b, digits=8)) for b in betas[tick_indices_y]]
-
-# Set the tick values and labels
-xticks!(heatmap_profit_gain, tick_indices_x, alpha_labels)
-yticks!(heatmap_profit_gain, tick_indices_y, beta_labels)
+annotate!(heatmap_profit_gain, 8, -0.8, text(L"\beta \times 10^{5}", 10))
+annotate!(heatmap_profit_gain, -0.8, 8, text(L"\alpha", 10, rotation=90))
+for i in 1:15
+    annotate!(heatmap_profit_gain, i, 0, text(beta_labels[i], 6, :top, rotation=45))
+    annotate!(heatmap_profit_gain, 0, i, text(alpha_labels[i], 6, :right))
+end
 
 savefig(heatmap_profit_gain, "cornell_theory_reading_group_RL/calvano_slides/heatmap_profit_gain_once.png")
 
@@ -159,31 +155,30 @@ alphas = alphas_df[:, 1]
 betas = betas_df[:, 1]
 profit_gain = Matrix(profit_gain_df)
 
+
+
 heatmap_profit_gain = heatmap(
     1:size(profit_gain, 2), 1:size(profit_gain, 1), profit_gain,
-    color=:thermal,
-    xlabel=L"\alpha",
-    ylabel=L"\beta",
+    color=:blues,
+    ylabel=L"\alpha",
+    xlabel=L"\beta \times 10^{5}",
     aspectratio=:equal,
-    margin=5mm,
-    tickdirection=:out,
+    margin=0mm,
+    xticks=(1:15, beta_labels),
+    yticks=(1:15, alpha_labels),
+    tickdirection=:none,
     size=(800, 700),
     background=:transparent,
     grid=false,
-    framestyle=:box  # Added a box frame for better visibility
+    yaxis=:mirror,
+    framestyle=:none  # Keep the frame but not the ticks
 )
-
-# Add custom x and y tick labels (fewer ticks for readability)
-tick_indices_x = 1:3:length(alphas)
-tick_indices_y = 1:3:length(betas)
-
-# Format the labels to be more readable
-alpha_labels = [string(round(a, digits=3)) for a in alphas[tick_indices_x]]
-beta_labels = [string(round(b, digits=8)) for b in betas[tick_indices_y]]
-
-# Set the tick values and labels
-xticks!(heatmap_profit_gain, tick_indices_x, alpha_labels)
-yticks!(heatmap_profit_gain, tick_indices_y, beta_labels)
+annotate!(heatmap_profit_gain, 8, -0.8, text(L"\beta \times 10^{5}", 10))
+annotate!(heatmap_profit_gain, -0.8, 8, text(L"\alpha", 10, rotation=90))
+for i in 1:15
+    annotate!(heatmap_profit_gain, i, 0, text(beta_labels[i], 6, :top, rotation=45))
+    annotate!(heatmap_profit_gain, 0, i, text(alpha_labels[i], 6, :right))
+end
 
 savefig(heatmap_profit_gain, "cornell_theory_reading_group_RL/calvano_slides/heatmap_profit_gain_25_nodelta.png")
 
@@ -198,30 +193,25 @@ profit_gain = Matrix(profit_gain_df)
 
 heatmap_profit_gain = heatmap(
     1:size(profit_gain, 2), 1:size(profit_gain, 1), profit_gain,
-    color=:thermal,
-    xlabel=L"\alpha",
-    ylabel=L"\beta",
+    color=:blues,
+    ylabel=L"\alpha",
+    xlabel=L"\beta \times 10^{5}",
     aspectratio=:equal,
-    margin=5mm,
-    tickdirection=:out,
+    margin=0mm,
+    xticks=(1:15, beta_labels),
+    yticks=(1:15, alpha_labels),
+    tickdirection=:none,
     size=(800, 700),
     background=:transparent,
     grid=false,
-    framestyle=:box  # Added a box frame for better visibility
+    yaxis=:mirror,
+    framestyle=:none  # Keep the frame but not the ticks
 )
-
-# Add custom x and y tick labels (fewer ticks for readability)
-tick_indices_x = 1:3:length(alphas)
-tick_indices_y = 1:3:length(betas)
-
-# Format the labels to be more readable
-alpha_labels = [string(round(a, digits=3)) for a in alphas[tick_indices_x]]
-beta_labels = [string(round(b, digits=8)) for b in betas[tick_indices_y]]
-
-# Set the tick values and labels
-xticks!(heatmap_profit_gain, tick_indices_x, alpha_labels)
-yticks!(heatmap_profit_gain, tick_indices_y, beta_labels)
+annotate!(heatmap_profit_gain, 8, -0.8, text(L"\beta \times 10^{5}", 10))
+annotate!(heatmap_profit_gain, -0.8, 8, text(L"\alpha", 10, rotation=90))
+for i in 1:15
+    annotate!(heatmap_profit_gain, i, 0, text(beta_labels[i], 6, :top, rotation=45))
+    annotate!(heatmap_profit_gain, 0, i, text(alpha_labels[i], 6, :right))
+end
 
 savefig(heatmap_profit_gain, "cornell_theory_reading_group_RL/calvano_slides/heatmap_profit_gain_25_delta.png")
-
-

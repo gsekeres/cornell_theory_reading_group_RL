@@ -68,6 +68,7 @@ def q_learning(q_value_1, q_value_2, step_size, beta):
     stay = 0
     counter = 0
 
+    # For stability, set last_state and state_minus_two to 0
     last_state = [0, 0]
     state_minus_two = [0, 0]
     
@@ -80,14 +81,15 @@ def q_learning(q_value_1, q_value_2, step_size, beta):
         # Next state is purely determined by the actions
         next_state = action
         
+        # Same state, or same pair of states repeating
         if next_state == state or (next_state == last_state and state == state_minus_two):
             stay += 1
         else:
             stay = 0
 
-        # break after 100m iterations
+        # break after 10m iterations (to avoid infinite loop)
         counter += 1
-        if counter > 100000000:
+        if counter > 10000000:
             break
         # Print statements for debugging
         #print(stay)
@@ -107,14 +109,15 @@ def q_learning(q_value_1, q_value_2, step_size, beta):
                 reward[1] + delta * np.max(q_value_2[next_state_idx[0], next_state_idx[1], :]) -
                 q_value_2[state_idx[0], state_idx[1], action_idx[1]])
         
+        # Update states
         state_minus_two = last_state
         last_state = state
         state = next_state
         state_idx = next_state_idx
     
-    if counter > 100000000:
+    if counter > 100000000: # If it didn't converge
         return state, time, False
-    else:
+    else:                   # If it converged
         return state, time, True
 
 if __name__ == "__main__":

@@ -29,7 +29,7 @@ end
 Initialize Q-values for both players.
 Returns a tuple of two 3D arrays for player 1 and player 2.
 """
-function initialize_q_values(action_space, mu, a0)
+function initialize_q_values(action_space, mu, a0; delta=0.95)
     m = length(action_space)
     q_value_1 = zeros(Float64, m, m, m)
     q_value_2 = zeros(Float64, m, m, m)
@@ -39,12 +39,12 @@ function initialize_q_values(action_space, mu, a0)
     
     # Vectorized initialization for player 1
     for s1 in axes(q_value_1, 1), s2 in axes(q_value_1, 2), a1 in axes(q_value_1, 3)
-        q_value_1[s1, s2, a1] = mean([profit_matrix[a1, i][1] for i in eachindex(action_space)])
+        q_value_1[s1, s2, a1] = mean([profit_matrix[a1, i][1] for i in eachindex(action_space)]) / (1-delta)
     end
     
     # Vectorized initialization for player 2
     for s1 in axes(q_value_2, 1), s2 in axes(q_value_2, 2), a2 in axes(q_value_2, 3)
-        q_value_2[s1, s2, a2] = mean([profit_matrix[i, a2][2] for i in eachindex(action_space)])
+        q_value_2[s1, s2, a2] = mean([profit_matrix[i, a2][2] for i in eachindex(action_space)]) / (1-delta)
     end
     
     return q_value_1, q_value_2

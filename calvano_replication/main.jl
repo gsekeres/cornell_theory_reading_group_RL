@@ -9,7 +9,7 @@ function main()
     # Set number of threads for parallel processing
     println("Running with $(Threads.nthreads()) threads")
     
-    # Parameters (same as in Python)
+    # Parameters
     a0 = 0.0
     mu = 0.25
     delta = 0.95
@@ -28,14 +28,14 @@ function main()
     betas = collect(LinRange(0.000005, 0.000015, num_betas))
     
     # Output directory
-    output_dir = "cornell_theory_reading_group_RL/calvano_slides/julia_output"
+    output_dir = "cornell_theory_reading_group_RL/calvano_slides/julia_output_delta"
     
     # Number of runs per parameter combination
     num_runs = 25
     
     println("Running parameter sweep with $num_runs runs per combination...")
     @time prices, avg_profit, profit_gain, convergence_counts = run_parameter_sweep(
-        alphas, betas, action_space, mu, delta, a0, pn, pm; num_runs=num_runs
+        alphas, betas, action_space, mu, 0.95, a0, pn, pm; num_runs=num_runs
     )
     
     # Calculate and print convergence statistics
