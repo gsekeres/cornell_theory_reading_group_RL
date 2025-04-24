@@ -12,7 +12,7 @@ function main()
     # Parameters
     a0 = 0.0
     mu = 0.25
-    delta = 0.95
+    delta = 0.0
     xi = 0.1
     pn = 1.4729      # Nash price
     pm = 1.92498     # Monopoly price
@@ -28,14 +28,14 @@ function main()
     betas = collect(LinRange(0.000005, 0.000015, num_betas))
     
     # Output directory
-    output_dir = "cornell_theory_reading_group_RL/calvano_slides/julia_output_delta"
+    output_dir = "cornell_theory_reading_group_RL/calvano_slides/julia_output"
     
     # Number of runs per parameter combination
     num_runs = 25
     
     println("Running parameter sweep with $num_runs runs per combination...")
     @time prices, avg_profit, profit_gain, convergence_counts = run_parameter_sweep(
-        alphas, betas, action_space, mu, 0.95, a0, pn, pm; num_runs=num_runs
+        alphas, betas, action_space, mu, delta, a0, pn, pm; num_runs=num_runs
     )
     
     # Calculate and print convergence statistics

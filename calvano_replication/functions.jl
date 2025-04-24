@@ -83,7 +83,7 @@ function q_learning(action_space, step_size, beta, mu, delta, a0; max_iterations
     action_range = eachindex(action_space)
     
     # Initialize Q-values
-    q_value_1, q_value_2 = initialize_q_values(action_space, mu, a0)
+    q_value_1, q_value_2 = initialize_q_values(action_space, mu, a0; delta=delta)
     
     # Initialize state randomly
     state_idx = [rand(action_range), rand(action_range)]

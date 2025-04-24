@@ -1,4 +1,4 @@
-using Plots, LaTeXStrings, Measures, CSV, DataFrames, LinearAlgebra
+using Plots, LaTeXStrings, Measures, CSV, DataFrames, LinearAlgebra, Statistics
 
 f(x, y) = ((x-1) * exp(8-4x)) / (exp(8-4x) + exp(8-4y) + 1)
 
@@ -67,7 +67,7 @@ heatmap_plot = heatmap(
     color=:thermal,
     xlabel=L"p_2",
     ylabel=L"p_1",
-    aspectratio=:equal,
+    aspect_ratio=:equal,
     margin=0mm,
     xticks=(1:15, formatted_prices),
     yticks=(1:15, formatted_prices),
@@ -76,7 +76,7 @@ heatmap_plot = heatmap(
     size=(800, 700),
     background=:transparent,
     grid=false,
-    yaxis=:mirror,
+    yaxis=:flip,
     framestyle=:none  # Keep the frame but not the ticks
 )
 annotate!(heatmap_plot, 8, -0.8, text(L"p_2", 10))
@@ -112,17 +112,18 @@ betas_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/betas.csv", 
 
 # Convert DataFrames to matrices
 profit_gain = Matrix(profit_gain_df)
-clims_ref = extrema(profit_gain)  
 alphas = alphas_df[:, 1]
 betas = betas_df[:, 1]
-
-# Format the labels to be more readable
 alpha_labels = [string(round(a, digits=3)) for a in alphas]
 beta_labels = [string(round(b * 10^5, digits=3)) for b in betas]
 
+alphas_reversed = reverse(alphas)  # This will have 0.2 as the first element
+alpha_labels_reversed = reverse(alpha_labels)
+profit_gain_reversed = reverse(profit_gain, dims=1)  # Reverse rows
+
 # Create the heatmap
 heatmap_profit_gain = heatmap(
-    1:size(profit_gain, 2), 1:size(profit_gain, 1), profit_gain,
+    1:size(profit_gain_reversed, 2), 1:size(profit_gain_reversed, 1), profit_gain_reversed,
     color=:thermal,
     ylabel=L"\alpha",
     xlabel=L"\beta \times 10^{5}",
@@ -143,6 +144,7 @@ for i in 1:15
     annotate!(heatmap_profit_gain, 0, i, text(alpha_labels[i], 6, :right))
 end
 
+
 savefig(heatmap_profit_gain, "cornell_theory_reading_group_RL/calvano_slides/heatmap_profit_gain_once.png")
 
 
@@ -151,14 +153,20 @@ profit_gain_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/julia_
 alphas_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/julia_output/alphas.csv", DataFrame, header=true)
 betas_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/julia_output/betas.csv", DataFrame, header=true)
 
+profit_gain = Matrix(profit_gain_df)
 alphas = alphas_df[:, 1]
 betas = betas_df[:, 1]
-profit_gain = Matrix(profit_gain_df)
 
+alpha_labels = [string(round(a, digits=3)) for a in alphas]
+beta_labels = [string(round(b * 10^5, digits=3)) for b in betas]
+
+alphas_reversed = reverse(alphas)  # This will have 0.2 as the first element
+alpha_labels_reversed = reverse(alpha_labels)
+profit_gain_reversed = reverse(profit_gain, dims=1)  # Reverse rows
 
 
 heatmap_profit_gain = heatmap(
-    1:size(profit_gain, 2), 1:size(profit_gain, 1), profit_gain,
+    1:size(profit_gain_reversed, 2), 1:size(profit_gain_reversed, 1), profit_gain_reversed,
     color=:blues,
     ylabel=L"\alpha",
     xlabel=L"\beta \times 10^{5}",
@@ -170,7 +178,6 @@ heatmap_profit_gain = heatmap(
     size=(800, 700),
     background=:transparent,
     grid=false,
-    yaxis=:mirror,
     framestyle=:none  # Keep the frame but not the ticks
 )
 annotate!(heatmap_profit_gain, 8, -0.8, text(L"\beta \times 10^{5}", 10))
@@ -187,12 +194,19 @@ profit_gain_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/julia_
 alphas_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/julia_output_delta/alphas.csv", DataFrame, header=true)
 betas_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/julia_output_delta/betas.csv", DataFrame, header=true)
 
+profit_gain = Matrix(profit_gain_df)
 alphas = alphas_df[:, 1]
 betas = betas_df[:, 1]
-profit_gain = Matrix(profit_gain_df)
+
+alpha_labels = [string(round(a, digits=3)) for a in alphas]
+beta_labels = [string(round(b * 10^5, digits=3)) for b in betas]
+
+alphas_reversed = reverse(alphas)  # This will have 0.2 as the first element
+alpha_labels_reversed = reverse(alpha_labels)
+profit_gain_reversed = reverse(profit_gain, dims=1)  # Reverse rows
 
 heatmap_profit_gain = heatmap(
-    1:size(profit_gain, 2), 1:size(profit_gain, 1), profit_gain,
+    1:size(profit_gain_reversed, 2), 1:size(profit_gain_reversed, 1), profit_gain_reversed,
     color=:blues,
     ylabel=L"\alpha",
     xlabel=L"\beta \times 10^{5}",
@@ -204,7 +218,6 @@ heatmap_profit_gain = heatmap(
     size=(800, 700),
     background=:transparent,
     grid=false,
-    yaxis=:mirror,
     framestyle=:none  # Keep the frame but not the ticks
 )
 annotate!(heatmap_profit_gain, 8, -0.8, text(L"\beta \times 10^{5}", 10))
@@ -215,3 +228,89 @@ for i in 1:15
 end
 
 savefig(heatmap_profit_gain, "cornell_theory_reading_group_RL/calvano_slides/heatmap_profit_gain_25_delta.png")
+
+convergence_counts_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/julia_output_delta/convergence_counts.csv", DataFrame, header=false)
+convergence_counts = Matrix(convergence_counts_df)
+alphas_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/julia_output_delta/alphas.csv", DataFrame, header=true)
+betas_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/julia_output_delta/betas.csv", DataFrame, header=true)
+
+alphas = alphas_df[:, 1]
+betas = betas_df[:, 1]
+
+# Format the labels to be more readable
+alpha_labels = [string(round(a, digits=3)) for a in alphas]
+beta_labels = [string(round(b * 10^5, digits=3)) for b in betas]
+
+alphas_reversed = reverse(alphas)  # This will have 0.2 as the first element
+alpha_labels_reversed = reverse(alpha_labels)
+convergence_counts_reversed = reverse(convergence_counts, dims=1)  # Reverse rows
+
+
+heatmap_convergence_counts = heatmap(
+    1:size(convergence_counts_reversed, 2), 1:size(convergence_counts_reversed, 1), convergence_counts_reversed,
+    color=:thermal,
+    ylabel=L"\alpha",
+    xlabel=L"\beta \times 10^{5}",
+    aspectratio=:equal,
+    margin=0mm,
+    xticks=(1:15, beta_labels),
+    yticks=(1:15, alpha_labels),
+    tickdirection=:none,
+    size=(800, 700),
+    background=:transparent,
+    grid=false,
+    framestyle=:none  # Keep the frame but not the ticks
+)
+annotate!(heatmap_convergence_counts, 8, -0.8, text(L"\beta \times 10^{5}", 10))
+annotate!(heatmap_convergence_counts, -0.8, 8, text(L"\alpha", 10, rotation=90))
+for i in 1:15
+    annotate!(heatmap_convergence_counts, i, 0, text(beta_labels[i], 6, :top, rotation=45))
+    annotate!(heatmap_convergence_counts, 0, i, text(alpha_labels[i], 6, :right))
+end
+
+savefig(heatmap_convergence_counts, "cornell_theory_reading_group_RL/calvano_slides/heatmap_convergence_counts_25_delta.png")
+
+
+
+convergence_counts_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/julia_output/convergence_counts.csv", DataFrame, header=false)
+convergence_counts = Matrix(convergence_counts_df)
+alphas_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/julia_output_delta/alphas.csv", DataFrame, header=true)
+betas_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/julia_output_delta/betas.csv", DataFrame, header=true)
+
+alphas = alphas_df[:, 1]
+betas = betas_df[:, 1]
+
+# Format the labels to be more readable
+alpha_labels = [string(round(a, digits=3)) for a in alphas]
+beta_labels = [string(round(b * 10^5, digits=3)) for b in betas]
+
+alphas_reversed = reverse(alphas)  # This will have 0.2 as the first element
+alpha_labels_reversed = reverse(alpha_labels)
+convergence_counts_reversed = reverse(convergence_counts, dims=1)  # Reverse rows
+heatmap_convergence_counts = heatmap(
+    1:size(convergence_counts_reversed, 2), 1:size(convergence_counts_reversed, 1), convergence_counts_reversed,
+    color=:thermal,
+    ylabel=L"\alpha",
+    xlabel=L"\beta \times 10^{5}",
+    aspectratio=:equal,
+    margin=0mm,
+    xticks=(1:15, beta_labels),
+    yticks=(1:15, alpha_labels),
+    tickdirection=:none,
+    size=(800, 700),
+    background=:transparent,
+    grid=false,
+    framestyle=:none  # Keep the frame but not the ticks
+)
+annotate!(heatmap_convergence_counts, 8, -0.8, text(L"\beta \times 10^{5}", 10))
+annotate!(heatmap_convergence_counts, -0.8, 8, text(L"\alpha", 10, rotation=90))
+for i in 1:15
+    annotate!(heatmap_convergence_counts, i, 0, text(beta_labels[i], 6, :top, rotation=45))
+    annotate!(heatmap_convergence_counts, 0, i, text(alpha_labels[i], 6, :right))
+end
+
+savefig(heatmap_convergence_counts, "cornell_theory_reading_group_RL/calvano_slides/heatmap_convergence_counts_25_nodelta.png")
+
+
+
+
