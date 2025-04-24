@@ -22,6 +22,20 @@
     tabsize=4,
     captionpos=b
 }
+\newcommand{\shrug}[1][]{%
+\begin{tikzpicture}[baseline,x=0.8\ht\strutbox,y=0.8\ht\strutbox,line width=0.125ex,#1]
+\def\arm{(-2.5,0.95) to (-2,0.95) (-1.9,1) to (-1.5,0) (-1.35,0) to (-0.8,0)};
+\draw \arm;
+\draw[xscale=-1] \arm;
+\def\headpart{(0.6,0) arc[start angle=-40, end angle=40,x radius=0.6,y radius=0.8]};
+\draw \headpart;
+\draw[xscale=-1] \headpart;
+\def\eye{(-0.075,0.15) .. controls (0.02,0) .. (0.075,-0.15)};
+\draw[shift={(-0.3,0.8)}] \eye;
+\draw[shift={(0,0.85)}] \eye;
+% draw mouth
+\draw (-0.1,0.2) to [out=15,in=-100] (0.4,0.95); 
+\end{tikzpicture}}
 \title{Artificial Intelligence, Algorithmic Pricing, and Collusion}
 \subtitle{Emilio Calvano, Giacomo Calzolari, Vincenzo Denicol\`{o}, and Sergio Pastorello}
 \date{\today}
@@ -125,6 +139,39 @@
 	Work in the simplified game as above, with $\delta = 0.95$ and $|A| = m = 15$. Discretize the price grid over \[\left[p^N - 0.1(p^M - p^N), p^M + 0.1(p^M - p^N)\right]\] Set the initial matrix to the discounted payoff if the other player randomized over all actions: \[Q_{i,0}(s,a_i) = \frac{\sum_{a_{-i} \in A^{n-1}}\pi_i(a_i,a_{-i})}{(1-\delta) |A|^{n-1}}\]Draw the initial state $s_0$ randomly as well.
 \end{frame}
 
+\begin{frame}\frametitle{An Issue}
+	If you initialize $Q_0$ precisely the way that they say they do, stuff breaks immediately. Specifically, we saw one of two patterns: either for all parameters convergence was to the same pair ($\approx 1.58$), which is not the collusive equilibrium, or convergence was to a clearly suboptimal pair (\emph{e.g.} $1.8926$ and $1.4277$). 
+	
+	This was fixed entirely by removing $(1-\delta)$ from the denominator.
+	\[
+	\underbrace{\frac{\sum_{a_{-i} \in A^{n-1}}\pi_i(a_i,a_{-i})}{(1-\delta) |A|^{n-1}}}_{\text{Bad}} \qquad\qquad \qquad \underbrace{\frac{\sum_{a_{-i} \in A^{n-1}}\pi_i(a_i,a_{-i})}{ |A|^{n-1}}}_\text{Good}
+	\]
+\end{frame}
+\begin{frame}\frametitle{Why does this happen?}
+	\begin{itemize}[<+->]
+		\item[] 
+		\item[] {\Huge \shrug}
+	\end{itemize}
+\end{frame}
+\begin{frame}\frametitle{Some Theories}
+	\begin{itemize}
+		\item The obvious note is that this is the discounted payoff until infinity
+		\item The issue is that this is not how learning works. We incorporate $\delta$ by updating one period at a time, not sending time far into the future: \[Q(s,a) = \mathbb{E}(\pi \mid s,a) + \textcolor{red}{\delta} \mathbb{E}\left[ \max_{a'\in A} Q(s',a') \mid s,a\right]\]
+		\item By including the tail, we massively overestimate the value to each action
+		\item $\varepsilon$ degenerating quickly explains convergence to a random suboptimal pair
+	\end{itemize}
+\end{frame}
+\begin{frame}\frametitle{Some More Theories}
+	\begin{itemize}[<+->]
+		\item Why did we get to that $(1.58,1.58)$ pair, however? \bigskip
+		\item {\huge \shrug} \bigskip
+		\item We'd love any theories you have. Finn's: 
+		\item[]\begin{center}
+			\alert{One of the algo just beat the other one to death and force them to play Nash}
+		\end{center}
+	\end{itemize}
+\end{frame}
+
 \begin{frame}\frametitle{Continuous Stage Payoffs}
 \centering
 	\includegraphics[width=10cm]{cont_plot.png}
@@ -168,16 +215,6 @@
 		\node at (2.5,-1) {\tiny$\langle p_1^{1},p_{2}^{1},$};
 		\node at (2.5,-1.2) {\tiny$\pi_i(p_1^{1},p_{2}^{1}) \rangle$};
 	\end{tikzpicture}
-\end{frame}
-
-\begin{frame}\frametitle{Remark}
-	In the paper, they say that their results are robust to many specifications of $Q_0$, the initial matrix.
-	
-	We did not see that.
-	
-	We saw results that changed a lot depending on $Q_0$. 
-	
-	Specifically, their results were \emph{only} replicated by their specific choice of $Q_0$. If you initial $Q_0 = 0$ for all values, they converge to the static Nash payoffs necessarily.
 \end{frame}
 
 \begin{frame}\frametitle{Remark}

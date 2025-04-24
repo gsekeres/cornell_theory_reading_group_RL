@@ -1,4 +1,4 @@
-using Plots, LaTeXStrings, Measures
+using Plots, LaTeXStrings, Measures, CSV, DataFrames, LinearAlgebra
 
 f(x, y) = ((x-1) * exp(8-4x)) / (exp(8-4x) + exp(8-4y) + 1)
 
@@ -101,3 +101,52 @@ end
 
 # Save the heatmap as PNG
 savefig(heatmap_plot, "cornell_theory_reading_group_RL/calvano_slides/heatmap_plot.png")
+
+
+# Plot converged profit gain
+# Read the CSV files
+profit_gain_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/profit_gain.csv", DataFrame, header=false)
+avg_profit_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/avg_profit.csv", DataFrame, header=false)
+prices_0_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/prices_0.csv", DataFrame, header=false)
+prices_1_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/prices_1.csv", DataFrame, header=false)
+alphas_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/alphas.csv", DataFrame, header=true)
+betas_df = CSV.read("cornell_theory_reading_group_RL/calvano_slides/betas.csv", DataFrame, header=true)
+
+# Convert DataFrames to matrices
+profit_gain = Matrix(profit_gain_df)
+avg_profit = Matrix(avg_profit_df)
+prices_0 = Matrix(prices_0_df)
+prices_1 = Matrix(prices_1_df)
+alphas = alphas_df[:, 1]
+betas = betas_df[:, 1]
+
+# Create the heatmap
+heatmap_profit_gain = heatmap(
+    1:size(profit_gain, 2), 1:size(profit_gain, 1), profit_gain,
+    color=:reds,
+    xlabel=L"\alpha",
+    ylabel=L"\beta",
+    aspectratio=:equal,
+    margin=5mm,
+    tickdirection=:out,
+    size=(800, 700),
+    background=:transparent,
+    grid=false,
+    framestyle=:box  # Added a box frame for better visibility
+)
+
+# Add custom x and y tick labels (fewer ticks for readability)
+tick_indices_x = 1:3:length(alphas)
+tick_indices_y = 1:3:length(betas)
+
+# Format the labels to be more readable
+alpha_labels = [string(round(a, digits=3)) for a in alphas[tick_indices_x]]
+beta_labels = [string(round(b, digits=8)) for b in betas[tick_indices_y]]
+
+# Set the tick values and labels
+xticks!(heatmap_profit_gain, tick_indices_x, alpha_labels)
+yticks!(heatmap_profit_gain, tick_indices_y, beta_labels)
+
+savefig(heatmap_profit_gain, "cornell_theory_reading_group_RL/calvano_slides/heatmap_profit_gain.png")
+
+
