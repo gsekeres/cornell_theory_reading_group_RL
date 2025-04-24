@@ -27,20 +27,17 @@ m = 15
 
 action_space = np.linspace(pn-xi*(pm-pn),pm+xi*(pm-pn),m)
 
-q_value_1 = np.zeros((m,m,m,m))
-q_value_2 = np.zeros((m,m,m,m))
-for k in range(m):
-    rewards = 0
-    for l in range(m):
-        rewards += process(action_space[k], action_space[l])[0]
-    q_value_1[:, :, k, :] = rewards / ((1 - delta)*m)
+q_value_1 = np.zeros((m,m,m))
+q_value_2 = np.zeros((m,m,m))
+for s1 in range(m): # State of p1
+    for s2 in range(m): # State of p2
+        for a1 in range(m): # Action of p1
+            q_value_1[s1, s2, a1] = sum(process(action_space[a1], action_space[i])[0] for i in range(m))/(m)
 
-for l in range(m):
-    rewards = 0
-    for k in range(m):
-        rewards += process(action_space[k], action_space[l])[1]
-    q_value_2[:, :, l, :] = rewards / ((1 - delta)*m)
-
+for s1 in range(m): # State of p1
+    for s2 in range(m): # State of p2
+        for a2 in range(m): # Action of p2
+            q_value_2[s1, s2, a2] = sum(process(action_space[i], action_space[a2])[1] for i in range(m))/(m)
 
 def q_learning(q_value_1, q_value_2, step_size, beta):
     # Get initial state indices
@@ -75,13 +72,13 @@ def q_learning(q_value_1, q_value_2, step_size, beta):
         rewards[1] += reward[1]
         
         # Q-Learning update using indices
-        q_value_1[state_idx[0], state_idx[1], action_idx[0], action_idx[1]] += step_size * (
-                reward[0] + delta * np.max(q_value_1[action_idx[0], action_idx[1], :, :]) -
-                q_value_1[state_idx[0], state_idx[1], action_idx[0], action_idx[1]])
+        q_value_1[state_idx[0], state_idx[1], action_idx[0]] += step_size * (
+                reward[0] + delta * np.max(q_value_1[action_idx[0], action_idx[1], :]) -
+                q_value_1[state_idx[0], state_idx[1], action_idx[0]])
         
-        q_value_2[state_idx[0], state_idx[1], action_idx[1], action_idx[0]] += step_size * (
-                reward[1] + delta * np.max(q_value_2[action_idx[0], action_idx[1], :, :]) -
-                q_value_2[state_idx[0], state_idx[1], action_idx[1], action_idx[0]])
+        q_value_2[state_idx[0], state_idx[1], action_idx[1]] += step_size * (
+                reward[1] + delta * np.max(q_value_2[action_idx[0], action_idx[1], :]) -
+                q_value_2[state_idx[0], state_idx[1], action_idx[1]])
         
         state = next_state
         state_idx = action_idx
@@ -115,34 +112,9 @@ if __name__ == "__main__":
             avg_profit[i, j] = (profit(p_optimal[0], p_optimal[1]) + profit(p_optimal[1], p_optimal[0]))/2
             print(f"alpha: {alphas[i]}, beta: {betas[j]}, per-firm profit: {avg_profit[i, j]}, time to learn: {time_to_learn}")
     
-    profit_gain = (avg_profit - profit(pn,pn)) / (profit(pm,pm)-profit(pn,pn))
+    profit_gain = np.zeros((num_alphas, num_betas))
+    for i in range(num_alphas):
+        for j in range(num_betas):
+            profit_gain[i, j] = (avg_profit[i, j] - profit(pn,pn)) / (profit(pm,pm)-profit(pn,pn))
     
-    # Create the heatmap plot
-    plt.figure(figsize=(10, 8), facecolor='none')
-    heatmap = sns.heatmap(profit_gain, 
-                      cmap='thermal',  # Using the thermal colormap as requested
-                      xticklabels=np.round(betas[::10], 8),  # Show fewer ticks for readability
-                      yticklabels=np.round(alphas[::10], 3),
-                      cbar_kws={'label': 'Profit Gain Ratio'},
-                      vmin=0, vmax=1)
-
-    # Set labels and title
-    plt.xlabel('Beta')
-    plt.ylabel('Alpha')
-
-    # Improve tick label formatting
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-
-    # Set the axes background to transparent too
-    ax = plt.gca()
-    ax.patch.set_alpha(0)
-
-    # Save the figure with transparent background
-    plt.savefig('profit_gain_heatmap.png', 
-            dpi=300, 
-            bbox_inches='tight',
-            transparent=True)  # This ensures transparency in the saved image
-
-    # If you want to also display the plot
-    plt.show()
+    
