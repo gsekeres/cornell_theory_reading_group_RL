@@ -139,13 +139,11 @@
 	Work in the simplified game as above, with $\delta = 0.95$ and $|A| = m = 15$. Discretize the price grid over \[\left[p^N - 0.1(p^M - p^N), p^M + 0.1(p^M - p^N)\right]\] Set the initial matrix to the discounted payoff if the other player randomized over all actions: \[Q_{i,0}(s,a_i) = \frac{\sum_{a_{-i} \in A^{n-1}}\pi_i(a_i,a_{-i})}{(1-\delta) |A|^{n-1}}\]Draw the initial state $s_0$ randomly as well.
 \end{frame}
 
-\begin{frame}\frametitle{An Issue}
-	Their definition of $Q_0$ doesn't make sense. We incorporate $\delta$ by updating one period at a time, not sending time far into the future: \[Q(s,a) = \mathbb{E}(\pi \mid s,a) + \textcolor{red}{\delta} \mathbb{E}\left[ \max_{a'\in A} Q(s',a') \mid s,a\right]\]
-	This may be why they saw instability as $\beta \to \bar{\beta}$: if exploration degenerates too quickly, the learners may get ``stuck'' at a pair that is suboptimal but wasn't updated downwards enough. 
+\begin{frame}\frametitle{A Difference}
+	Their definition of $Q_0$ incorporates the fact that the game is infinite, and defines as if we are taking the discounted sum of payoffs forever, assuming that the other player uniformly randomizes.
 	
-	\[
-	\underbrace{\frac{\sum_{a_{-i} \in A^{n-1}}\pi_i(a_i,a_{-i})}{(1-\delta) |A|^{n-1}}}_{\text{Bad}} \qquad\qquad \qquad \underbrace{\frac{\sum_{a_{-i} \in A^{n-1}}\pi_i(a_i,a_{-i})}{ |A|^{n-1}}}_\text{Good}
-	\]
+	That's not how we've thought about this previously, because we're incorporating a meaningful discount factor for the first time. However, it means that $Q_0$ has a different qualitative meaning than we're used to. This is confusing and we don't particularly well understand the effects.
+	
 	(We test both, and show some results later)
 \end{frame}
 \begin{frame}\frametitle{Continuous Stage Payoffs}
