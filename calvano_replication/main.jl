@@ -5,14 +5,13 @@ using Statistics
 # Include functions
 include("functions.jl")
 
-function main()
+function main(delta, num_alphas, num_betas, alphamin, alphamax, betamin, betamax, output_dir, num_runs, specification)
     # Set number of threads for parallel processing
     println("Running with $(Threads.nthreads()) threads")
     
     # Parameters
     a0 = 0.0
     mu = 0.25
-    delta = 0.0
     xi = 0.1
     pn = 1.4729      # Nash price
     pm = 1.92498     # Monopoly price
@@ -22,20 +21,13 @@ function main()
     action_space = collect(LinRange(pn-xi*(pm-pn), pm+xi*(pm-pn), m))
     
     # Parameter sweep settings
-    num_alphas = 15
-    num_betas = 15
-    alphas = collect(LinRange(0.1, 0.2, num_alphas))
-    betas = collect(LinRange(0.000005, 0.000015, num_betas))
-    
-    # Output directory
-    output_dir = "cornell_theory_reading_group_RL/calvano_slides/julia_output"
-    
-    # Number of runs per parameter combination
-    num_runs = 25
+    alphas = collect(LinRange(alphamin, alphamax, num_alphas))
+    betas = collect(LinRange(betamin, betamax, num_betas))
     
     println("Running parameter sweep with $num_runs runs per combination...")
+    println("Specification: $specification")
     @time prices, avg_profit, profit_gain, convergence_counts = run_parameter_sweep(
-        alphas, betas, action_space, mu, delta, a0, pn, pm; num_runs=num_runs
+        alphas, betas, action_space, mu, delta, a0, pn, pm; num_runs=num_runs, specification
     )
     
     # Calculate and print convergence statistics
@@ -56,4 +48,14 @@ function main()
 end
 
 # Run!
-main()
+
+# Q-learning specification, base in Calvano
+main(0.95, 15, 15, 0.1, 0.2, 0.000005, 0.000015, "output_main_delta_0.95", 25, "calvano")
+# Q-learning specification, without delta.
+main(0.0, 15, 15, 0.1, 0.2, 0.000005, 0.000015, "output_main_delta_0.0", 25, "calvano")
+
+# Full feedback specification
+main(0.95, 15, 15, 0.1, 0.2, 0.000005, 0.000015, "output_full_feedback", 25, "full_feedback")
+
+# SARSA specification
+#main(0.95, 15, 15, 0.1, 0.2, 0.000005, 0.000015, "output_sarsa", 25, "sarsa")
