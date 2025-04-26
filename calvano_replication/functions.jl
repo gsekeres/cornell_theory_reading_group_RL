@@ -232,6 +232,88 @@ function q_learning_full_feedback(action_space, step_size, beta, mu, delta, a0; 
     return state, time, success
 end
 """
+    sarsa(action_space, step_size, beta, mu, delta, a0; max_iterations=10_000_000, stability_threshold=100_000)
+
+Run Q-learning algorithm with two agents playing against each other.
+Returns the final state (prices), time to learn, and success flag.
+"""
+function sarsa(action_space, step_size, beta, mu, delta, a0; max_iterations=10_000_000, stability_threshold=100_000)
+    # Get action space dimensions
+    action_range = eachindex(action_space)
+    
+    # Initialize Q-values
+    q_value_1, q_value_2 = initialize_q_values(action_space, mu, a0; delta=delta)
+    
+    # Initialize state randomly
+    state_idx = [rand(action_range), rand(action_range)]
+    state = [action_space[state_idx[1]], action_space[state_idx[2]]]
+    
+    time = 0
+    action_idx = [0, 0]
+    stay = 0
+    
+    # Pre-allocate arrays for performance
+    next_state = similar(state)
+    next_state_idx = similar(state_idx)
+    last_state = similar(state)
+    state_minus_two = similar(state)
+    last_state .= zeros(2)
+    state_minus_two .= zeros(2)
+    reward = (0.0, 0.0)
+    action_idx_next = [0, 0]
+    
+    # Main learning loop
+    while stay < stability_threshold && time < max_iterations
+        time += 1
+        
+        # Choose actions for both players
+        action_idx[1] = choose_action(state_idx, q_value_1, beta, time)
+        action_idx[2] = choose_action(state_idx, q_value_2, beta, time)
+        
+        # Next state is determined by the actions
+        next_state[1] = action_space[action_idx[1]]
+        next_state[2] = action_space[action_idx[2]]
+
+        # Map states to indices
+        next_state_idx[1] = action_idx[1]
+        next_state_idx[2] = action_idx[2]
+
+        # Choose next actions for both players
+        action_idx_next[1] = choose_action(next_state_idx, q_value_1, beta, time+1)
+        action_idx_next[2] = choose_action(next_state_idx, q_value_2, beta, time+1)
+        
+        # Check for stability
+        if next_state == state || (next_state == last_state && state == state_minus_two)
+            stay += 1
+        else
+            stay = 0
+        end
+        
+        # Calculate rewards
+        reward = compute_profits(next_state[1], next_state[2], mu, a0)
+
+        
+        # Q-Learning update for player 1
+        q_value_1[state_idx[1], state_idx[2], action_idx[1]] += step_size * (
+            reward[1] + delta * q_value_1[next_state_idx[1], next_state_idx[2], action_idx_next[1]] -
+            q_value_1[state_idx[1], state_idx[2], action_idx[1]])
+        
+        # Q-Learning update for player 2
+        q_value_2[state_idx[1], state_idx[2], action_idx[2]] += step_size * (
+            reward[2] + delta * q_value_2[next_state_idx[1], next_state_idx[2], action_idx_next[2]] -
+            q_value_2[state_idx[1], state_idx[2], action_idx[2]])
+        
+        # Update state
+        state_minus_two .= last_state
+        last_state .= state
+        state .= next_state
+        state_idx .= next_state_idx
+    end
+    
+    success = time < max_iterations
+    return state, time, success
+end
+"""
     run_parameter_sweep(alphas, betas, action_space, mu, delta, a0, pn, pm; num_runs=5)
 
 Run parameter sweep over alphas and betas to find optimal Q-learning parameters.
@@ -269,6 +351,8 @@ function run_parameter_sweep(alphas, betas, action_space, mu, delta, a0, pn, pm;
                     p_optimal, time_to_learn, success = q_learning(action_space, alphas[i], betas[j], mu, delta, a0)
                 elseif specification == "full_feedback"
                     p_optimal, time_to_learn, success = q_learning_full_feedback(action_space, alphas[i], betas[j], mu, delta, a0)
+                elseif specification == "sarsa"
+                    p_optimal, time_to_learn, success = sarsa(action_space, alphas[i], betas[j], mu, delta, a0)
                 end
                 
                 # Store results
