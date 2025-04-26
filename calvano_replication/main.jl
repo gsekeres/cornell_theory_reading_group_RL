@@ -51,6 +51,7 @@ end
 
 # Q-learning specification, base in Calvano
 main(0.95, 100, 100, 0.025, 0.25, 0.0000000000000000001, 0.00002, "output_main_delta_0.95", 100, "calvano")
+
 # Q-learning specification, without delta.
 main(0.0, 100, 100, 0.025, 0.25, 0.0000000000000000001, 0.00002, "output_main_delta_0.0", 100, "calvano")
 
@@ -59,3 +60,6 @@ main(0.95, 100, 100, 0.025, 0.25, 0.0000000000000000001, 0.00002, "output_full_f
 
 # SARSA specification
 main(0.95, 100, 100, 0.025, 0.25, 0.0000000000000000001, 0.00002, "output_sarsa", 100, "sarsa")
+
+# Q-learning specification, Q_0 = 0 initially
+main(0.95, 100, 100, 0.025, 0.25, 0.0000000000000000001, 0.00002, "output_zeros", 100, "zeros")

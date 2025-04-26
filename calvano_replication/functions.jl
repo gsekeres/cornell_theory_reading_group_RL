@@ -49,6 +49,18 @@ function initialize_q_values(action_space, mu, a0; delta=0.95)
     
     return q_value_1, q_value_2
 end
+"""
+    initialize_q_values_zeros(action_space, mu, a0; delta=0.95)
+
+Initialize Q-values for both players to zero.
+Returns a tuple of two 3D arrays for player 1 and player 2.
+"""
+function initialize_q_values_zeros(action_space, _, _; delta=0.95)
+    m = length(action_space)
+    q_value_1 = zeros(Float64, m, m, m)
+    q_value_2 = zeros(Float64, m, m, m)
+    return q_value_1, q_value_2
+end
 
 """
     choose_action(state_idx, q_value, beta, time)
@@ -313,6 +325,83 @@ function sarsa(action_space, step_size, beta, mu, delta, a0; max_iterations=10_0
     success = time < max_iterations
     return state, time, success
 end
+
+"""
+    q_learning_zeros(action_space, step_size, beta, mu, delta, a0; max_iterations=10_000_000, stability_threshold=100_000)
+
+Run Q-learning algorithm with two agents playing against each other.
+Returns the final state (prices), time to learn, and success flag.
+"""
+function q_learning_zeros(action_space, step_size, beta, mu, delta, a0; max_iterations=10_000_000, stability_threshold=100_000)
+    # Get action space dimensions
+    action_range = eachindex(action_space)
+    
+    # Initialize Q-values
+    q_value_1, q_value_2 = initialize_q_values_zeros(action_space, mu, a0; delta=delta)
+    
+    # Initialize state randomly
+    state_idx = [rand(action_range), rand(action_range)]
+    state = [action_space[state_idx[1]], action_space[state_idx[2]]]
+    
+    time = 0
+    action_idx = [0, 0]
+    stay = 0
+    
+    # Pre-allocate arrays for performance
+    next_state = similar(state)
+    next_state_idx = similar(state_idx)
+    last_state = similar(state)
+    state_minus_two = similar(state)
+    last_state .= zeros(2)
+    state_minus_two .= zeros(2)
+    reward = (0.0, 0.0)
+    
+    # Main learning loop
+    while stay < stability_threshold && time < max_iterations
+        time += 1
+        
+        # Choose actions for both players
+        action_idx[1] = choose_action(state_idx, q_value_1, beta, time)
+        action_idx[2] = choose_action(state_idx, q_value_2, beta, time)
+        
+        # Next state is determined by the actions
+        next_state[1] = action_space[action_idx[1]]
+        next_state[2] = action_space[action_idx[2]]
+        
+        # Check for stability
+        if next_state == state || (next_state == last_state && state == state_minus_two)
+            stay += 1
+        else
+            stay = 0
+        end
+        
+        # Calculate rewards
+        reward = compute_profits(next_state[1], next_state[2], mu, a0)
+        
+        # Map states to indices
+        next_state_idx[1] = action_idx[1]
+        next_state_idx[2] = action_idx[2]
+        
+        # Q-Learning update for player 1
+        q_value_1[state_idx[1], state_idx[2], action_idx[1]] += step_size * (
+            reward[1] + delta * maximum(q_value_1[next_state_idx[1], next_state_idx[2], :]) -
+            q_value_1[state_idx[1], state_idx[2], action_idx[1]])
+        
+        # Q-Learning update for player 2
+        q_value_2[state_idx[1], state_idx[2], action_idx[2]] += step_size * (
+            reward[2] + delta * maximum(q_value_2[next_state_idx[1], next_state_idx[2], :]) -
+            q_value_2[state_idx[1], state_idx[2], action_idx[2]])
+        
+        # Update state
+        state_minus_two .= last_state
+        last_state .= state
+        state .= next_state
+        state_idx .= next_state_idx
+    end
+    
+    success = time < max_iterations
+    return state, time, success
+end
 """
     run_parameter_sweep(alphas, betas, action_space, mu, delta, a0, pn, pm; num_runs=5)
 
@@ -353,6 +442,8 @@ function run_parameter_sweep(alphas, betas, action_space, mu, delta, a0, pn, pm;
                     p_optimal, time_to_learn, success = q_learning_full_feedback(action_space, alphas[i], betas[j], mu, delta, a0)
                 elseif specification == "sarsa"
                     p_optimal, time_to_learn, success = sarsa(action_space, alphas[i], betas[j], mu, delta, a0)
+                elseif specification == "zeros"
+                    p_optimal, time_to_learn, success = q_learning_zeros(action_space, alphas[i], betas[j], mu, delta, a0)
                 end
                 
                 # Store results
