@@ -26,7 +26,7 @@ function main(delta, num_alphas, num_betas, alphamin, alphamax, betamin, betamax
     
     println("Running parameter sweep with $num_runs runs per combination...")
     println("Specification: $specification")
-    @time prices, avg_profit, profit_gain, convergence_counts = run_parameter_sweep(
+    @time prices, avg_profit, profit_gain, convergence_counts, all_prices, all_success = run_parameter_sweep(
         alphas, betas, action_space, mu, delta, a0, pn, pm; num_runs=num_runs, specification
     )
     
@@ -42,7 +42,7 @@ function main(delta, num_alphas, num_betas, alphamin, alphamax, betamin, betamax
     println("  Not converged: $not_converged/$total_combinations ($(round(not_converged/total_combinations*100, digits=1))%)")
     
     println("\nSaving results...")
-    save_results(prices, avg_profit, profit_gain, convergence_counts, alphas, betas, output_dir)
+    save_results(prices, avg_profit, profit_gain, convergence_counts, all_prices, all_success, alphas, betas, output_dir)
     
     println("Done!")
 end

@@ -55,7 +55,7 @@ end
 Initialize Q-values for both players to zero.
 Returns a tuple of two 3D arrays for player 1 and player 2.
 """
-function initialize_q_values_zeros(action_space, _, _; delta=0.95)
+function initialize_q_values_zeros(action_space, mu, a0; delta=0.95)
     m = length(action_space)
     q_value_1 = zeros(Float64, m, m, m)
     q_value_2 = zeros(Float64, m, m, m)
@@ -419,6 +419,8 @@ function run_parameter_sweep(alphas, betas, action_space, mu, delta, a0, pn, pm;
     avg_profit = zeros(Float64, length(alphas), length(betas))
     profit_gain = zeros(Float64, length(alphas), length(betas))
     convergence_counts = zeros(Int, length(alphas), length(betas))
+    all_prices = zeros(Float64, num_runs, length(alphas), length(betas), 2)
+    all_success = zeros(Bool, num_runs, length(alphas), length(betas))
     
     # Nash and monopoly profits for reference
     nash_profit = compute_profits(pn, pn, mu, a0)[1]
@@ -477,18 +479,42 @@ function run_parameter_sweep(alphas, betas, action_space, mu, delta, a0, pn, pm;
             # Report results
             println("alpha: $(alphas[i]), beta: $(betas[j]), per-firm profit: $(avg_profit[i, j]), " *
                    "converged: $(convergence_counts[i, j])/$(num_runs)")
+
+            all_prices[:, i, j, :] = run_prices
+            all_success[:, i, j] = run_success
         end
     end
     
-    return prices, avg_profit, profit_gain, convergence_counts
+    return prices, avg_profit, profit_gain, convergence_counts, all_prices, all_success
 end
+
+"""
+    write_tensor(io, A; header=nothing)
+
+Write array `A` to `io` so that:
+  * each *row* in the output corresponds to the first index of `A`
+  * everything else is flattened into columns, left-to-right in memory order
+Optional `header` (an AbstractVector of strings) is written as the first line.
+"""
+function write_tensor(io, A; header=nothing)
+    header !== nothing && println(io, join(header, ","))
+
+    nrows  = size(A,1)                  # keep first index as “row”
+    ncols  = length(A) ÷ nrows          # everything else becomes columns
+    M      = reshape(A, nrows, ncols)   # now both dims are plain Ints
+
+    for r in 1:nrows
+        println(io, join(M[r, :], ",")) # same trick you used for matrices
+    end
+end
+
 
 """
     save_results(prices, avg_profit, profit_gain, convergence_counts, alphas, betas, output_dir)
 
 Save results to CSV files.
 """
-function save_results(prices, avg_profit, profit_gain, convergence_counts, alphas, betas, output_dir)
+function save_results(prices, avg_profit, profit_gain, convergence_counts, all_prices, all_success, alphas, betas, output_dir)
     # Create output directory if it doesn't exist
     mkpath(output_dir)
     
@@ -537,5 +563,18 @@ function save_results(prices, avg_profit, profit_gain, convergence_counts, alpha
         for beta in betas
             println(io, beta)
         end
+    end
+
+    open(joinpath(output_dir, "all_prices.csv"), "w") do io
+        hdr = ["run$(r)_alpha$(i)_beta$(j)_player$(pl)"
+               for r in 1:size(all_prices,1),
+                   i in 1:size(all_prices,2),
+                   j in 1:size(all_prices,3),
+                   pl in 1:size(all_prices,4)] |> vec
+        write_tensor(io, all_prices; header = hdr)
+    end
+    
+    open(joinpath(output_dir, "all_success.csv"), "w") do io
+        write_tensor(io, Int.(all_success))
     end
 end
