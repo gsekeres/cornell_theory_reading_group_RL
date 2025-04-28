@@ -29,7 +29,7 @@ end
 Initialize Q-values for both players.
 Returns a tuple of two 3D arrays for player 1 and player 2.
 """
-function initialize_q_values(action_space, mu, a0; delta=0.95)
+function initialize_q_values(action_space, mu, a0; delta=0.95, sens=1)
     m = length(action_space)
     q_value_1 = zeros(Float64, m, m, m)
     q_value_2 = zeros(Float64, m, m, m)
@@ -47,18 +47,8 @@ function initialize_q_values(action_space, mu, a0; delta=0.95)
         q_value_2[s1, s2, a2] = mean([profit_matrix[i, a2][2] for i in eachindex(action_space)]) / (1-delta)
     end
     
-    return q_value_1, q_value_2
-end
-"""
-    initialize_q_values_zeros(action_space, mu, a0; delta=0.95)
-
-Initialize Q-values for both players to zero.
-Returns a tuple of two 3D arrays for player 1 and player 2.
-"""
-function initialize_q_values_zeros(action_space, mu, a0; delta=0.95)
-    m = length(action_space)
-    q_value_1 = zeros(Float64, m, m, m)
-    q_value_2 = zeros(Float64, m, m, m)
+    q_value_1 = sens * q_value_1
+    q_value_2 = sens * q_value_2
     return q_value_1, q_value_2
 end
 
@@ -332,12 +322,12 @@ end
 Run Q-learning algorithm with two agents playing against each other.
 Returns the final state (prices), time to learn, and success flag.
 """
-function q_learning_zeros(action_space, step_size, beta, mu, delta, a0; max_iterations=10_000_000, stability_threshold=100_000)
+function q_learning_sens(action_space, step_size, beta, mu, delta, a0, sens; max_iterations=10_000_000, stability_threshold=100_000)
     # Get action space dimensions
     action_range = eachindex(action_space)
     
     # Initialize Q-values
-    q_value_1, q_value_2 = initialize_q_values_zeros(action_space, mu, a0; delta=delta)
+    q_value_1, q_value_2 = initialize_q_values(action_space, mu, a0; delta=delta, sens=sens)
     
     # Initialize state randomly
     state_idx = [rand(action_range), rand(action_range)]
@@ -409,7 +399,7 @@ Run parameter sweep over alphas and betas to find optimal Q-learning parameters.
 Performs multiple runs for each parameter combination and averages the results.
 Returns matrices of prices, average profits, and profit gains.
 """
-function run_parameter_sweep(alphas, betas, action_space, mu, delta, a0, pn, pm; num_runs=5, specification="calvano")
+function run_parameter_sweep(alphas, betas, action_space, mu, delta, a0, pn, pm; num_runs=5, specification="calvano", sens=1)
     # Get dimensions for result arrays
     alpha_range = eachindex(alphas)
     beta_range = eachindex(betas)
@@ -444,8 +434,8 @@ function run_parameter_sweep(alphas, betas, action_space, mu, delta, a0, pn, pm;
                     p_optimal, time_to_learn, success = q_learning_full_feedback(action_space, alphas[i], betas[j], mu, delta, a0)
                 elseif specification == "sarsa"
                     p_optimal, time_to_learn, success = sarsa(action_space, alphas[i], betas[j], mu, delta, a0)
-                elseif specification == "zeros"
-                    p_optimal, time_to_learn, success = q_learning_zeros(action_space, alphas[i], betas[j], mu, delta, a0)
+                elseif specification == "sensitive"
+                    p_optimal, time_to_learn, success = q_learning_sens(action_space, alphas[i], betas[j], mu, delta, a0, sens)
                 end
                 
                 # Store results
