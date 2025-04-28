@@ -50,28 +50,28 @@ end
 # Run!
 
 # Q-learning specification, base in Calvano
-main_small(0.95, 25, 25, 0.025, 0.25, 0.0000008, 0.00002, "output_main_delta_0.95", 25, "calvano", sens=1)
+main_small(0.95, 25, 25, 0.025, 0.25, 0.0000008, 0.00002, "output_small_main_delta_0.95", 25, "calvano", sens=1)
 
 # Q-learning specification, without delta.
-main_small(0.0, 25, 25, 0.025, 0.25, 0.0000008, 0.00002, "output_main_delta_0.0", 25, "calvano", sens=1)
+main_small(0.0, 25, 25, 0.025, 0.25, 0.0000008, 0.00002, "output_small_main_delta_0.0", 25, "calvano", sens=1)
 
 # Full feedback specification
-main_small(0.95, 25, 25, 0.025, 0.25, 0.0000008, 0.00002, "output_full_feedback", 25, "full_feedback", sens=1)
+main_small(0.95, 25, 25, 0.025, 0.25, 0.0000008, 0.00002, "output_small_full_feedback", 25, "full_feedback", sens=1)
 
 # SARSA specification
-main_small(0.95, 25, 25, 0.025, 0.25, 0.0000008, 0.00002, "output_sarsa", 25, "sarsa", sens=1)
+main_small(0.95, 25, 25, 0.025, 0.25, 0.0000008, 0.00002, "output_small_sarsa", 25, "sarsa", sens=1)
 
 # Q-learning specification, Q_0 = 0 initially
-main_small(0.95, 25, 25, 0.025, 0.25, 0.0000008, 0.00002, "output_zeros", 25, "sensitive", sens=0)
+main_small(0.95, 25, 25, 0.025, 0.25, 0.0000008, 0.00002, "output_small_zero", 25, "sensitive", sens=0)
 
 # Test Q-learning, 0.8*Q_0
-main_small(0.95, 25, 25, 0.025, 0.25, 0.0000008, 0.00002, "output_zeros", 25, "sensitive", sens=0.8)
+main_small(0.95, 25, 25, 0.025, 0.25, 0.0000008, 0.00002, "output_small_0.8", 25, "sensitive", sens=0.8)
 
 # Test Q-learning, 0.9*Q_0
-main_small(0.95, 25, 25, 0.025, 0.25, 0.0000008, 0.00002, "output_zeros", 25, "sensitive", sens=0.9)
+main_small(0.95, 25, 25, 0.025, 0.25, 0.0000008, 0.00002, "output_small_0.9", 25, "sensitive", sens=0.9)
 
 # Test Q-learning, 1.1*Q_0
-main_small(0.95, 25, 25, 0.025, 0.25, 0.0000008, 0.00002, "output_zeros", 25, "sensitive", sens=1.1)
+main_small(0.95, 25, 25, 0.025, 0.25, 0.0000008, 0.00002, "output_small_1.1", 25, "sensitive", sens=1.1)
 
 # Test Q-learning, 1.2*Q_0
-main_small(0.95, 25, 25, 0.025, 0.25, 0.0000008, 0.00002, "output_zeros", 25, "sensitive", sens=1.2)
+main_small(0.95, 25, 25, 0.025, 0.25, 0.0000008, 0.00002, "output_small_1.2", 25, "sensitive", sens=1.2)
