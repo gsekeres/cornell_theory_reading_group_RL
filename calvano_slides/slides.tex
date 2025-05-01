@@ -277,17 +277,133 @@
 	\end{center}
 \end{frame}
 
+\section{Results pt. 2}
+
+\begin{frame}\frametitle{Specifications}
+	For all: $25 \times 25$ grid of $(\alpha,\beta)$, on $\alpha \in [0.025,0.25]$ and $\beta \in (0,2\cdot 10^{-5}]$
+	\begin{itemize}
+		\item Baseline (with $\delta = 0.95$)
+		\item Fix $\delta = 0$
+		\item SARSA
+		\item Full Feedback
+		\item Sensitivity of $Q_0$ \begin{itemize} \item $Q_0 = 0$ \item $0.8 \cdot Q_0$ \item $0.9 \cdot Q_0$ \item \textcolor{red}{$1.1 \cdot Q_0$} \item \textcolor{red}{$1.2 \cdot Q_0$}\end{itemize}
+	\end{itemize}
+\end{frame}
+
+\begin{frame}\frametitle{Baseline Profit Gain}
+\begin{center}
+	\includegraphics[width=9cm]{heatmap_profit_gain_small_main_delta_0.95.png}
+\end{center}
+\end{frame}
+\begin{frame}\frametitle{Baseline Convergence}
+\begin{center}
+	\includegraphics[width=9cm]{heatmap_convergence_counts_small_main_delta_0.95.png}
+\end{center}
+\end{frame}
+\begin{frame}\frametitle{Baseline Actual Prices}
+\begin{center}
+	\includegraphics[width=9cm]{scatter_plot_prices_small_main_delta_0.95.png}
+\end{center}
+\end{frame}
+	
+	
+	\begin{frame}\frametitle{$\delta=0$ Profit Gain}
+\begin{center}
+	\includegraphics[width=9cm]{heatmap_profit_gain_small_main_delta_0.0.png}
+\end{center}
+\end{frame}
+\begin{frame}\frametitle{$\delta=0$ Convergence}
+\begin{center}
+	\includegraphics[width=9cm]{heatmap_convergence_counts_small_main_delta_0.0.png}
+\end{center}
+\end{frame}
+\begin{frame}\frametitle{$\delta=0$ Actual Prices}
+\begin{center}
+	\includegraphics[width=9cm]{scatter_plot_prices_small_main_delta_0.0.png}
+\end{center}
+\end{frame}
+
+	
+	\begin{frame}\frametitle{SARSA Profit Gain}
+\begin{center}
+	\includegraphics[width=9cm]{heatmap_profit_gain_small_sarsa.png}
+\end{center}
+\end{frame}
+\begin{frame}\frametitle{SARSA Convergence}
+\begin{center}
+	\includegraphics[width=9cm]{heatmap_convergence_counts_small_sarsa.png}
+\end{center}
+\end{frame}
+\begin{frame}\frametitle{SARSA Actual Prices}
+\begin{center}
+	\includegraphics[width=9cm]{scatter_plot_prices_small_sarsa.png}
+\end{center}
+\end{frame}
 
 
+	\begin{frame}\frametitle{Full Feedback Profit Gain}
+\begin{center}
+	\includegraphics[width=9cm]{heatmap_profit_gain_small_full_feedback.png}
+\end{center}
+\end{frame}
+\begin{frame}\frametitle{Full Feedback Convergence}
+\begin{center}
+	\includegraphics[width=9cm]{heatmap_convergence_counts_small_full_feedback.png}
+\end{center}
+\end{frame}
+\begin{frame}\frametitle{Full Feedback Actual Prices}
+\begin{center}
+	\includegraphics[width=9cm]{scatter_plot_prices_small_full_feedback.png}
+\end{center}
+\end{frame}
 
+	\begin{frame}\frametitle{$Q_0=0$ Profit Gain}
+\begin{center}
+	\includegraphics[width=9cm]{heatmap_profit_gain_small_zero.png}
+\end{center}
+\end{frame}
+\begin{frame}\frametitle{$Q_0=0$ Convergence}
+\begin{center}
+	\includegraphics[width=9cm]{heatmap_convergence_counts_small_zero.png}
+\end{center}
+\end{frame}
+\begin{frame}\frametitle{$Q_0=0$ Actual Prices}
+\begin{center}
+	\includegraphics[width=9cm]{scatter_plot_prices_small_zero.png}
+\end{center}
+\end{frame}
 
+	\begin{frame}\frametitle{$0.8 \cdot Q_0$ Profit Gain}
+\begin{center}
+	\includegraphics[width=9cm]{heatmap_profit_gain_small_0.8.png}
+\end{center}
+\end{frame}
+\begin{frame}\frametitle{$0.8 \cdot Q_0$ Convergence}
+\begin{center}
+	\includegraphics[width=9cm]{heatmap_convergence_counts_small_0.8.png}
+\end{center}
+\end{frame}
+\begin{frame}\frametitle{$0.8 \cdot Q_0$ Actual Prices}
+\begin{center}
+	\includegraphics[width=9cm]{scatter_plot_prices_small_0.8.png}
+\end{center}
+\end{frame}
 
-
-
-
-
-
-
+	\begin{frame}\frametitle{$0.9 \cdot Q_0$ Profit Gain}
+\begin{center}
+	\includegraphics[width=9cm]{heatmap_profit_gain_small_0.9.png}
+\end{center}
+\end{frame}
+\begin{frame}\frametitle{$0.9 \cdot Q_0$ Convergence}
+\begin{center}
+	\includegraphics[width=9cm]{heatmap_convergence_counts_small_0.9.png}
+\end{center}
+\end{frame}
+\begin{frame}\frametitle{$0.9 \cdot Q_0$ Actual Prices}
+\begin{center}
+	\includegraphics[width=9cm]{scatter_plot_prices_small_0.9.png}
+\end{center}
+\end{frame}
 
 
 

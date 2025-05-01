@@ -1,4 +1,4 @@
-using Plots, LaTeXStrings, Measures, CSV, DataFrames, LinearAlgebra, Statistics
+using Plots, LaTeXStrings, Measures, CSV, DataFrames, LinearAlgebra, Statistics, StatsBase
 
 f(x, y) = ((x-1) * exp(8-4x)) / (exp(8-4x) + exp(8-4y) + 1)
 
@@ -312,5 +312,152 @@ end
 savefig(heatmap_convergence_counts, "cornell_theory_reading_group_RL/calvano_slides/heatmap_convergence_counts_25_nodelta.png")
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Plot outputs from all small runs
+types = ["main_delta_0.95", "main_delta_0.0", "full_feedback", "sarsa", "zero", "0.8", "0.9", "1.1", "1.2"]
+
+alphas_df_new = CSV.read("cornell_theory_reading_group_RL/output_data/output_small_zero/alphas.csv", DataFrame, header=true)
+betas_df_new = CSV.read("cornell_theory_reading_group_RL/output_data/output_small_zero/betas.csv", DataFrame, header=true)
+
+alphas_new = alphas_df_new[:, 1]
+betas_new = betas_df_new[:, 1]
+
+alpha_labels_new = [string(round(a, digits=3)) for a in alphas_new]
+beta_labels_new = [string(round(b * 10^5, digits=3)) for b in betas_new]
+
+
+
+for type in types
+    local profit_gain_df = CSV.read("cornell_theory_reading_group_RL/output_data/output_small_$(type)/profit_gain.csv", DataFrame, header=false)
+    local convergence_counts_df = CSV.read("cornell_theory_reading_group_RL/output_data/output_small_$(type)/convergence_counts.csv", DataFrame, header=false)
+    local profit_gain = reverse(Matrix(profit_gain_df), dims=1)
+    local convergence_counts = reverse(Matrix(convergence_counts_df), dims=1)    
+    convergence_counts = convergence_counts ./ 25
+    for i in eachindex(profit_gain)
+        if convergence_counts[i] == 0
+            profit_gain[i] = NaN
+        end
+    end
+
+    local heatmap_profit_gain = heatmap(
+        1:size(profit_gain, 2), 1:size(profit_gain, 1), profit_gain, 
+        color=:thermal, 
+        ylabel=L"\alpha", 
+        xlabel=L"\beta \times 10^{5}", 
+        margin=0mm, 
+        xticks=(1:15, beta_labels_new),
+        yticks=(1:15, alpha_labels_new),
+        tickdirection=:none,
+        clim=(-0.023764994861794113, 1),
+        size=(1000, 700),
+        background=:transparent,
+        grid=false, 
+        framestyle=:none)
+    annotate!(heatmap_profit_gain, size(profit_gain, 2) / 2, -0.8, text(L"\beta \times 10^{5}", 10))
+    annotate!(heatmap_profit_gain, -0.8, size(profit_gain, 1) / 2, text(L"\alpha", 10, rotation=90))
+    for i in 1:size(profit_gain, 2)
+        annotate!(heatmap_profit_gain, i, 0, text(beta_labels_new[i], 6, :top, rotation=45))
+        annotate!(heatmap_profit_gain, 0, i, text(alpha_labels_new[i], 6, :right))
+    end
+    savefig(heatmap_profit_gain, "cornell_theory_reading_group_RL/calvano_slides/heatmap_profit_gain_small_$(type).png")
+
+    local heatmap_convergence_counts = heatmap(
+        1:size(convergence_counts, 2), 1:size(convergence_counts, 1), convergence_counts,
+        color=:thermal,
+        ylabel=L"\alpha",
+        xlabel=L"\beta \times 10^{5}",
+        margin=0mm, 
+        xticks=(1:15, beta_labels_new),
+        yticks=(1:15, alpha_labels_new),
+        tickdirection=:none,
+        clim=(0, 1),
+        size=(1000, 700),
+        background=:transparent,
+        grid=false, 
+        framestyle=:none)
+    annotate!(heatmap_convergence_counts, size(convergence_counts, 2) / 2, -0.8, text(L"\beta \times 10^{5}", 10))
+    annotate!(heatmap_convergence_counts, -0.8, size(convergence_counts, 1) / 2, text(L"\alpha", 10, rotation=90))
+    for i in 1:size(convergence_counts, 2)
+        annotate!(heatmap_convergence_counts, i, 0, text(beta_labels_new[i], 6, :top, rotation=45))
+        annotate!(heatmap_convergence_counts, 0, i, text(alpha_labels_new[i], 6, :right))
+    end
+    savefig(heatmap_convergence_counts, "cornell_theory_reading_group_RL/calvano_slides/heatmap_convergence_counts_small_$(type).png")
+end
+
+
+
+
+# Plot actual converged prices
+for type in types
+    local all_success_df = CSV.read("cornell_theory_reading_group_RL/output_data/output_small_$(type)/all_success.csv", DataFrame, header=false)
+    local all_prices_df = CSV.read("cornell_theory_reading_group_RL/output_data/output_small_$(type)/all_prices.csv", DataFrame, header=false, skipto=2)
+    local alphas_df = CSV.read("cornell_theory_reading_group_RL/output_data/output_small_$(type)/alphas.csv", DataFrame, header=true)
+    local betas_df = CSV.read("cornell_theory_reading_group_RL/output_data/output_small_$(type)/betas.csv", DataFrame, header=true)
+
+    local all_success = Matrix(all_success_df)
+    local all_prices = Matrix(all_prices_df)
+    local alphas = alphas_df[:, 1]
+    local betas = betas_df[:, 1]
+
+    nalphas = length(alphas)   # 25
+    nbetas = length(betas)    # 25
+    price_tuples = Vector{NTuple{4,Float64}}()
+
+    for run in 1:25                        # rows
+        for col in 1:625                   # columns
+            alphaindex = ((col - 1) % nalphas) + 1
+            betaindex = ((col - 1) ÷ nalphas) + 1
+
+        if all_success[run, col] == 0          # did not converge
+            push!(price_tuples,
+                  (NaN, NaN, alphas[alphaindex], betas[betaindex]))
+        else                                    # converged
+            p1 = all_prices[run,      col]      # firm 1
+            p2 = all_prices[run, col + 625]      # firm 2
+                push!(price_tuples,
+                    (p1, p2, alphas[alphaindex], betas[betaindex]))
+            end
+        end
+    end
+
+    valid_prices = [t for t in price_tuples if !isnan(t[1])]
+    price_pairs = [(t[1], t[2]) for t in valid_prices]
+    frequency_dict = countmap(price_pairs)
+    x_values = [p[1] for p in keys(frequency_dict)]
+    y_values = [p[2] for p in keys(frequency_dict)]
+    frequencies = collect(values(frequency_dict))
+
+    marker_sizes = sqrt.(frequencies) * 5
+
+    scatter_plot = scatter(
+        x_values, y_values, 
+        markersize = marker_sizes,
+        markerstrokewidth = 0,
+        alpha = 0.7,
+        legend = false,
+        xlabel = L"p_1",
+        ylabel = L"p_2",
+        size=(1000, 700),
+        background=:transparent,
+    )
+    savefig(scatter_plot, "cornell_theory_reading_group_RL/calvano_slides/scatter_plot_prices_small_$(type).png")
+end
+    
 
 
